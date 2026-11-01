@@ -575,6 +575,8 @@ h1 {
 
 .spotlight {
   position: relative;
+  display: grid;
+  gap: 0.85rem;
   padding: clamp(1rem, 2vw, 1.25rem);
   background: linear-gradient(180deg, var(--card-from), var(--card-to));
   border: 1px solid var(--border);
@@ -637,6 +639,109 @@ h1 {
 .spotlight-card {
   display: grid;
   gap: 1rem;
+}
+
+.spotlight-slides {
+  display: grid;
+}
+
+.spotlight-slide {
+  grid-area: 1 / 1;
+  min-width: 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 0.35s ease, transform 0.35s ease,
+    visibility 0s linear 0.35s;
+}
+
+.spotlight-slide.is-active {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity 0.35s ease, transform 0.35s ease, visibility 0s;
+}
+
+.spotlight-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+
+.spotlight-dots {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.spotlight-dot {
+  width: 0.45rem;
+  height: 0.45rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--border-strong);
+  cursor: pointer;
+  transition: width 0.2s ease, background 0.2s ease;
+}
+
+.spotlight-dot.is-active {
+  width: 1.35rem;
+  background: var(--accent);
+}
+
+.spotlight-dot:hover {
+  background: var(--accent);
+}
+
+.spotlight-footer-end {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.spotlight-counter {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.spotlight-nav {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.spotlight-arrow {
+  display: grid;
+  place-items: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--ghost-bg);
+  color: var(--muted-strong);
+  cursor: pointer;
+  transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.spotlight-arrow:hover {
+  background: var(--ghost-bg-hover);
+  border-color: var(--border-strong);
+  color: var(--text);
+}
+
+.spotlight-arrow svg {
+  width: 0.9rem;
+  height: 0.9rem;
+}
+
+.spotlight-save {
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
 }
 
 .spotlight-head {

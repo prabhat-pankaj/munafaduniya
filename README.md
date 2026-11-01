@@ -10,7 +10,7 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 
 - Daily Flipkart catalog refresh from the affiliate API
 - Featured deal carousel with auto-advance, manual controls, and reduced-motion support
-- Spotlight deal chosen from the best mobile or electronics offer
+- Auto-rotating hero carousel of unique best deals from multiple categories, reshuffled on every page load
 - Seven category sections with expandable product grids
 - Instant client-side search across products, brands, and categories
 - Product cards with price, MRP, savings, discount, and affiliate links
@@ -39,14 +39,14 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 
 `scripts/fetch-flipkart.mjs` calls Flipkart's affiliate search endpoint for a curated set of category queries. It normalises the response, keeps in-stock products with valid Flipkart URLs and images, adds the affiliate ID to every product URL, and writes the result to `data/catalog.json`.
 
-Only the category names and search queries are configured in the script. Products, prices, images, discounts, and links all come from the API response. The browser never calls the Flipkart API directly because that would expose the affiliate token.
+Only the category names and search queries are configured in the script. Products, prices, images, discounts, and links all come from the API response. The browser never calls the Flipkart API directly because that would expose the affiliate token. On each page load, the hero carousel selects top deals from the generated catalog and reshuffles them, so the visible set changes on refresh without needing another API call.
 
 The generated catalog contains:
 
 - `generatedAt` — timestamp of the build
 - `categories` — category keys, labels, and counts
-- `spotlight` — the product ID used in the hero spotlight
-- `featured` — ordered product IDs for the carousel
+- `spotlight` — fallback product ID for the hero carousel
+- `featured` — ordered product IDs for the featured row; the hero picks are excluded from it at render time
 - `products` — normalised products with `id`, `title`, `brand`, `image`, `url`, `price`, `mrp`, `discount`, `category`, and `categoryPath`
 
 ## Local setup

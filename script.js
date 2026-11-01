@@ -209,6 +209,12 @@
     var productById = Object.create(null);
     var carouselTimer = null;
     var carouselPaused = false;
+    var spotlightTimer = null;
+    var spotlightPaused = false;
+    var spotlightIndex = 0;
+    var spotlightSlides = [];
+    var spotlightDots = [];
+    var spotlightCounter = null;
     var reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
@@ -388,19 +394,99 @@
       );
     }
 
-    function renderSpotlight(product) {
-      if (!spotlight) {
-        return;
+    function pickBestDeals(allProducts, limit) {
+      var byCategory = Object.create(null);
+
+      allProducts.forEach(function (product) {
+        if (
+          !product ||
+          !product.id ||
+          product.price < 299 ||
+          product.discount < 10
+        ) {
+          return;
+        }
+
+        var key = product.category || "other";
+        if (!byCategory[key]) {
+          byCategory[key] = [];
+        }
+        byCategory[key].push(product);
+      });
+
+      var pool = [];
+      var selectedIds = Object.create(null);
+
+      Object.keys(byCategory).forEach(function (key) {
+        var ranked = byCategory[key].slice().sort(function (a, b) {
+          var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
+          var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
+          return (
+            bSaving - aSaving ||
+            (b.discount || 0) - (a.discount || 0) ||
+            (b.price || 0) - (a.price || 0)
+          );
+        });
+
+        var shortlist = ranked.slice(0, Math.min(3, ranked.length));
+        var roll = Math.random();
+        var pickIndex = roll > 0.85 ? 2 : roll > 0.6 ? 1 : 0;
+        var pick = shortlist[Math.min(pickIndex, shortlist.length - 1)];
+
+        if (pick) {
+          pool.push(pick);
+          selectedIds[pick.id] = true;
+        }
+      });
+
+      if (pool.length < limit) {
+        var fillers = allProducts
+          .filter(function (product) {
+            return (
+              product &&
+              product.id &&
+              !selectedIds[product.id] &&
+              product.price >= 299 &&
+              product.discount >= 10
+            );
+          })
+          .sort(function (a, b) {
+            var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
+            var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
+            return (
+              bSaving - aSaving ||
+              (b.discount || 0) - (a.discount || 0) ||
+              (b.price || 0) - (a.price || 0)
+            );
+          });
+
+        for (var i = 0; i < fillers.length && pool.length < limit; i += 1) {
+          pool.push(fillers[i]);
+          selectedIds[fillers[i].id] = true;
+        }
       }
 
-      var url = product ? safeProductUrl(product.url) : null;
-      if (!product || !url) {
-        spotlight.innerHTML =
-          '<div class="spotlight-loading"><span class="spotlight-kicker">Today\'s spotlight</span><p>No spotlight deal right now. Browse the deals below.</p></div>';
-        return;
+      return pool
+        .sort(function (a, b) {
+          var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
+          var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
+          return (
+            bSaving - aSaving ||
+            (b.discount || 0) - (a.discount || 0) ||
+            (b.price || 0) - (a.price || 0)
+          );
+        })
+        .slice(0, limit);
+    }
+
+    function spotlightSlideMarkup(product, index, total) {
+      var url = safeProductUrl(product.url);
+      if (!url) {
+        return "";
       }
 
       var image = safeImageUrl(product.image);
+      var category = product.categoryLabel || "Flipkart deal";
       var discount =
         product.discount > 0
           ? '<span class="spotlight-discount">' +
@@ -413,10 +499,30 @@
             formatPrice(product.mrp) +
             "</span>"
           : "";
+      var savings =
+        product.mrp > product.price ? product.mrp - product.price : 0;
+      var savingLabel =
+        savings > 0
+          ? '<span class="spotlight-save">Save ' +
+            formatPrice(savings) +
+            "</span>"
+          : "";
+      var active = index === 0;
 
-      spotlight.innerHTML =
+      return (
+        '<div class="spotlight-slide' +
+        (active ? " is-active" : "") +
+        '" role="group" aria-roledescription="slide" aria-label="' +
+        (index + 1) +
+        " of " +
+        total +
+        '"' +
+        (active ? "" : ' aria-hidden="true"') +
+        ">" +
         '<div class="spotlight-card">' +
-        '<div class="spotlight-head"><span class="spotlight-kicker">Today\'s spotlight</span>' +
+        '<div class="spotlight-head"><span class="spotlight-kicker">Best deal \u00b7 ' +
+        escapeHtml(category) +
+        "</span>" +
         discount +
         "</div>" +
         '<a class="spotlight-link" href="' +
@@ -426,10 +532,12 @@
         escapeHtml(image) +
         '" alt="' +
         escapeHtml(product.title) +
-        '" width="400" height="400" loading="eager" decoding="async"></div>' +
+        '" width="400" height="400" loading="' +
+        (active ? "eager" : "lazy") +
+        '" decoding="async"></div>' +
         '<div class="spotlight-body">' +
         '<p class="spotlight-brand">' +
-        escapeHtml(product.brand || product.categoryLabel || "Flipkart deal") +
+        escapeHtml(product.brand || category) +
         "</p>" +
         '<h3 class="spotlight-title">' +
         escapeHtml(product.title) +
@@ -438,15 +546,184 @@
         formatPrice(product.price) +
         "</span>" +
         mrp +
+        savingLabel +
         "</div>" +
         '<span class="spotlight-cta">View deal on Flipkart' +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>' +
         "</span>" +
         "</div>" +
         "</a>" +
-        "</div>";
+        "</div>" +
+        "</div>"
+      );
+    }
+
+    function stopSpotlight() {
+      if (spotlightTimer) {
+        window.clearInterval(spotlightTimer);
+        spotlightTimer = null;
+      }
+    }
+
+    function setSpotlightSlide(index, restart) {
+      if (!spotlightSlides.length) {
+        return;
+      }
+
+      spotlightIndex =
+        ((index % spotlightSlides.length) + spotlightSlides.length) %
+        spotlightSlides.length;
+
+      spotlightSlides.forEach(function (slide, slideIndex) {
+        var active = slideIndex === spotlightIndex;
+        slide.classList.toggle("is-active", active);
+        slide.setAttribute("aria-hidden", active ? "false" : "true");
+        if ("inert" in slide) {
+          slide.inert = !active;
+        }
+      });
+
+      spotlightDots.forEach(function (dot, dotIndex) {
+        var active = dotIndex === spotlightIndex;
+        dot.classList.toggle("is-active", active);
+        dot.setAttribute("aria-current", active ? "true" : "false");
+        dot.tabIndex = active ? 0 : -1;
+      });
+
+      if (spotlightCounter) {
+        spotlightCounter.textContent =
+          spotlightIndex + 1 + " / " + spotlightSlides.length;
+      }
+
+      if (restart) {
+        startSpotlight();
+      }
+    }
+
+    function startSpotlight() {
+      stopSpotlight();
+      if (reduceMotion || spotlightSlides.length <= 1) {
+        return;
+      }
+
+      spotlightTimer = window.setInterval(function () {
+        if (spotlightPaused || document.hidden || !spotlight.offsetParent) {
+          return;
+        }
+        setSpotlightSlide(spotlightIndex + 1, false);
+      }, 5000);
+    }
+
+    function bindSpotlightControls() {
+      var prev = document.getElementById("spotlightPrev");
+      var next = document.getElementById("spotlightNext");
+
+      spotlightDots.forEach(function (dot) {
+        dot.addEventListener("click", function () {
+          setSpotlightSlide(
+            parseInt(dot.getAttribute("data-spotlight-index"), 10),
+            true
+          );
+        });
+      });
+
+      if (prev) {
+        prev.addEventListener("click", function () {
+          setSpotlightSlide(spotlightIndex - 1, true);
+        });
+      }
+
+      if (next) {
+        next.addEventListener("click", function () {
+          setSpotlightSlide(spotlightIndex + 1, true);
+        });
+      }
+    }
+
+    function renderSpotlightCarousel(spotlightProducts) {
+      if (!spotlight) {
+        return;
+      }
+
+      stopSpotlight();
+      spotlightSlides = [];
+      spotlightDots = [];
+      spotlightCounter = null;
+      spotlightIndex = 0;
+
+      var carouselProducts = spotlightProducts.filter(function (product) {
+        return product && safeProductUrl(product.url);
+      });
+
+      var slides = carouselProducts
+        .map(function (product, index) {
+          return spotlightSlideMarkup(product, index, carouselProducts.length);
+        })
+        .filter(Boolean);
+
+      if (!slides.length) {
+        spotlight.innerHTML =
+          '<div class="spotlight-loading"><span class="spotlight-kicker">Today\'s best deals</span><p>No best deals right now. Browse the deals below.</p></div>';
+        return;
+      }
+
+      var dots = carouselProducts
+        .map(function (product, index) {
+          return (
+            '<button class="spotlight-dot' +
+            (index === 0 ? " is-active" : "") +
+            '" type="button" aria-label="Show deal ' +
+            (index + 1) +
+            ": " +
+            escapeHtml(product.title) +
+            '" aria-current="' +
+            (index === 0 ? "true" : "false") +
+            '" tabindex="' +
+            (index === 0 ? "0" : "-1") +
+            '" data-spotlight-index="' +
+            index +
+            '"></button>'
+          );
+        })
+        .join("");
+
+      var footer =
+        carouselProducts.length > 1
+          ? '<div class="spotlight-footer">' +
+            '<div class="spotlight-dots" role="group" aria-label="Choose a best deal">' +
+            dots +
+            "</div>" +
+            '<div class="spotlight-footer-end">' +
+            '<span class="spotlight-counter" id="spotlightCounter">1 / ' +
+            carouselProducts.length +
+            "</span>" +
+            '<div class="spotlight-nav">' +
+            '<button class="spotlight-arrow" id="spotlightPrev" type="button" aria-label="Previous best deal">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>' +
+            "</button>" +
+            '<button class="spotlight-arrow" id="spotlightNext" type="button" aria-label="Next best deal">' +
+            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>' +
+            "</button>" +
+            "</div>" +
+            "</div>" +
+            "</div>"
+          : "";
+
+      spotlight.innerHTML =
+        '<div class="spotlight-slides">' + slides.join("") + "</div>" + footer;
+
+      spotlightSlides = Array.prototype.slice.call(
+        spotlight.querySelectorAll(".spotlight-slide")
+      );
+      spotlightDots = Array.prototype.slice.call(
+        spotlight.querySelectorAll(".spotlight-dot")
+      );
+      spotlightCounter = document.getElementById("spotlightCounter");
 
       attachImageFallbacks(spotlight);
+      bindSpotlightControls();
+      setSpotlightSlide(0, false);
+      startSpotlight();
     }
 
     function renderFeatured(featuredProducts) {
@@ -836,6 +1113,32 @@
       }
     });
 
+    if (spotlight) {
+      spotlight.addEventListener("pointerenter", function () {
+        spotlightPaused = true;
+      });
+      spotlight.addEventListener("pointerleave", function () {
+        spotlightPaused = false;
+      });
+      spotlight.addEventListener("focusin", function () {
+        spotlightPaused = true;
+      });
+      spotlight.addEventListener("focusout", function (event) {
+        if (!spotlight.contains(event.relatedTarget)) {
+          spotlightPaused = false;
+        }
+      });
+      spotlight.addEventListener("keydown", function (event) {
+        if (event.key === "ArrowRight") {
+          event.preventDefault();
+          setSpotlightSlide(spotlightIndex + 1, true);
+        } else if (event.key === "ArrowLeft") {
+          event.preventDefault();
+          setSpotlightSlide(spotlightIndex - 1, true);
+        }
+      });
+    }
+
     document.addEventListener("visibilitychange", function () {
       carouselPaused = document.hidden;
     });
@@ -870,22 +1173,59 @@
 
         updateUpdatedDates(data.generatedAt);
 
+        var spotlightProducts = pickBestDeals(products, 7);
+        if (!spotlightProducts.length) {
+          var fallbackSpotlight = productById[data.spotlight] || products[0];
+          spotlightProducts = fallbackSpotlight ? [fallbackSpotlight] : [];
+        }
+
+        var spotlightIds = Object.create(null);
+        spotlightProducts.forEach(function (product) {
+          spotlightIds[product.id] = true;
+        });
+
         var featuredProducts = (Array.isArray(data.featured) ? data.featured : [])
           .map(function (id) {
             return productById[id];
           })
-          .filter(Boolean);
+          .filter(function (product) {
+            return product && !spotlightIds[product.id];
+          });
 
-        if (!featuredProducts.length) {
-          featuredProducts = products.slice(0, 10);
+        var featuredIds = Object.create(null);
+        featuredProducts.forEach(function (product) {
+          featuredIds[product.id] = true;
+        });
+
+        if (featuredProducts.length < 12) {
+          var fillers = products
+            .filter(function (product) {
+              return (
+                product &&
+                product.id &&
+                !spotlightIds[product.id] &&
+                !featuredIds[product.id] &&
+                product.discount > 0
+              );
+            })
+            .sort(function (a, b) {
+              return (
+                (b.discount || 0) - (a.discount || 0) ||
+                (b.price || 0) - (a.price || 0)
+              );
+            });
+
+          for (
+            var i = 0;
+            i < fillers.length && featuredProducts.length < 12;
+            i += 1
+          ) {
+            featuredProducts.push(fillers[i]);
+            featuredIds[fillers[i].id] = true;
+          }
         }
 
-        var spotlightProduct =
-          productById[data.spotlight] ||
-          featuredProducts[0] ||
-          products[0];
-
-        renderSpotlight(spotlightProduct);
+        renderSpotlightCarousel(spotlightProducts);
         renderFeatured(featuredProducts);
         renderCategories();
         updateCategoryChips();
@@ -901,7 +1241,7 @@
 
         if (spotlight) {
           spotlight.innerHTML =
-            '<div class="spotlight-loading"><span class="spotlight-kicker">Today\'s spotlight</span><p>Deals are taking a short break. Please refresh in a moment.</p></div>';
+            '<div class="spotlight-loading"><span class="spotlight-kicker">Today\'s best deals</span><p>Deals are taking a short break. Please refresh in a moment.</p></div>';
         }
       });
   }
