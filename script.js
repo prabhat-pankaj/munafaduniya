@@ -72,7 +72,12 @@
   }
 
   function showError(message) {
-    status.innerHTML = message;
+    status.textContent = message + " You can also email ";
+    var link = document.createElement("a");
+    link.href = "mailto:" + emailAddress;
+    link.textContent = emailAddress;
+    status.appendChild(link);
+    status.appendChild(document.createTextNode(" directly."));
     status.classList.add("is-error");
   }
 
@@ -116,16 +121,17 @@
           showSuccess();
           return;
         }
+        if (result && result.message) {
+          throw new Error(result.message);
+        }
         throw new Error("Request failed");
       })
-      .catch(function () {
-        showError(
-          'We could not send your request. Please try again, or email <a href="mailto:' +
-            emailAddress +
-            '">' +
-            emailAddress +
-            "</a> directly."
-        );
+      .catch(function (error) {
+        var message =
+          error && error.message && error.message !== "Request failed"
+            ? error.message
+            : "We could not send your request. Please try again.";
+        showError(message);
       })
       .finally(function () {
         setLoading(false);
