@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>munafaduniya.com — Domain for Sale</title>
-  <meta name="description" content="munafaduniya.com is for sale. A brandable .com domain for affiliate marketing, personal finance, deals, and digital commerce. Send your offer and request a quotation.">
+  <title>munafaduniya — Fresh Flipkart deals across mobiles, electronics, fashion and more</title>
+  <meta name="description" content="Discover fresh Flipkart deals on mobiles, electronics, fashion, home essentials, beauty, sports, and appliances. Curated daily, with direct links to Flipkart.">
   <meta name="theme-color" content="#0d0c0b" id="themeColor">
   <script>
     (function () {
@@ -24,8 +24,8 @@
   </script>
   <link rel="canonical" href="https://www.munafaduniya.com/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="munafaduniya.com — Domain for Sale">
-  <meta property="og:description" content="A brandable .com domain for affiliate marketing, personal finance, and digital commerce. Serious offers invited.">
+  <meta property="og:title" content="munafaduniya — Fresh Flipkart deals, curated daily">
+  <meta property="og:description" content="Mobiles, electronics, fashion, home, beauty, sports, and appliances — fresh Flipkart deals in one place.">
   <meta property="og:url" content="https://www.munafaduniya.com/">
   <meta name="twitter:card" content="summary">
   <link rel="icon" href="logo.png" type="image/png">
@@ -34,17 +34,21 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
-<body>
-  <a class="skip-link" href="#offer">Skip to the offer form</a>
+<body data-page="home">
+  <a class="skip-link" href="#featured">Skip to today's deals</a>
 
   <header class="site-header">
     <div class="container header-inner">
-      <a class="brand" href="#top" aria-label="munafaduniya.com home">
+      <a class="brand" href="index.html" aria-label="munafaduniya home">
         <img class="brand-logo" src="logo.png" alt="" width="40" height="40">
         <span class="brand-name">munafaduniya<span>.com</span></span>
       </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="#featured">Deals</a>
+        <a href="contact.html">Contact</a>
+      </nav>
       <div class="header-actions">
-        <span class="sale-badge"><span class="sale-dot" aria-hidden="true"></span>Domain for sale</span>
+        <span class="live-badge"><span class="live-dot" aria-hidden="true"></span>Deals live</span>
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <circle cx="12" cy="12" r="4"/>
@@ -56,181 +60,170 @@
         </button>
       </div>
     </div>
+
+    <div class="category-bar">
+      <div class="container category-scroll" aria-label="Deal categories">
+        <a class="cat-chip" data-category="mobiles" href="#cat-mobiles">Mobiles</a>
+        <a class="cat-chip" data-category="electronics" href="#cat-electronics">Electronics</a>
+        <a class="cat-chip" data-category="fashion" href="#cat-fashion">Fashion</a>
+        <a class="cat-chip" data-category="home" href="#cat-home">Home</a>
+        <a class="cat-chip" data-category="beauty" href="#cat-beauty">Beauty</a>
+        <a class="cat-chip" data-category="sports" href="#cat-sports">Sports</a>
+        <a class="cat-chip" data-category="appliances" href="#cat-appliances">Appliances</a>
+      </div>
+    </div>
   </header>
 
   <main id="top">
     <section class="hero container">
       <div class="hero-copy">
-        <h1>Own a name built for <span class="highlight">profit</span>.</h1>
-        <p class="lede">munafaduniya.com brings together &ldquo;munafa&rdquo; (profit) and &ldquo;duniya&rdquo; (world) into a memorable brand for affiliate marketing, personal finance, deals, and digital commerce.</p>
+        <p class="eyebrow">Flipkart deals, handpicked</p>
+        <h1>Smart deals for your <span class="highlight">everyday world.</span></h1>
+        <p class="lede">Fresh offers on mobiles, electronics, fashion, home essentials, beauty, sports, and appliances — gathered in one simple place.</p>
 
-        <ul class="feature-list">
-          <li>
-            <span class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-            </span>
-            Short, easy to say, and instantly brandable
-          </li>
-          <li>
-            <span class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-            </span>
-            Relevant to affiliate, finance, deals, and e-commerce
-          </li>
-          <li>
-            <span class="feature-icon" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-            </span>
-            Clean .com with a guided, secure transfer
-          </li>
-        </ul>
-
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#offer">Make an offer</a>
-          <a class="btn btn-ghost" href="mailto:munafaduniya@gmail.com?subject=Enquiry%20about%20munafaduniya.com">Email the owner</a>
-        </div>
-
-        <dl class="domain-stats">
-          <div>
-            <dt>Domain</dt>
-            <dd>munafaduniya.com</dd>
+        <form class="search-form" id="searchForm" role="search">
+          <div class="search-field">
+            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <circle cx="11" cy="11" r="7"/>
+              <path d="M20 20l-3.5-3.5"/>
+            </svg>
+            <label class="visually-hidden" for="searchInput">Search deals</label>
+            <input id="searchInput" name="q" type="search" placeholder="Search products, brands, or categories" autocomplete="off" enterkeyhint="search">
           </div>
-          <div>
-            <dt>Extension</dt>
-            <dd>.com</dd>
-          </div>
-          <div>
-            <dt>Price</dt>
-            <dd>Open to offers</dd>
-          </div>
-          <div>
-            <dt>Transfer</dt>
-            <dd>Guided &amp; secure</dd>
-          </div>
-        </dl>
-      </div>
-
-      <div class="form-card" id="offer">
-        <div class="form-head">
-          <p class="form-kicker">Serious offers only</p>
-          <h2>Request a quotation</h2>
-          <p>Share your details and offer. The owner will reply by email with a quotation and the next steps.</p>
-        </div>
-
-        <form id="offerForm" action="https://formsubmit.co/munafaduniya@gmail.com" method="POST">
-          <input type="hidden" name="_subject" value="New quotation request for munafaduniya.com">
-          <input type="hidden" name="_template" value="table">
-          <input type="hidden" name="_captcha" value="false">
-          <input type="hidden" name="_url" value="https://www.munafaduniya.com/">
-          <input type="hidden" name="_next" value="https://www.munafaduniya.com/thank-you.html">
-          <input class="honeypot" type="text" name="_honey" tabindex="-1" autocomplete="off" aria-hidden="true">
-
-          <div class="field-row">
-            <div class="field">
-              <label for="full_name">Full name <span aria-hidden="true">*</span></label>
-              <input id="full_name" name="full_name" type="text" placeholder="Your name" autocomplete="name" required>
-            </div>
-            <div class="field">
-              <label for="email">Email address <span aria-hidden="true">*</span></label>
-              <input id="email" name="email" type="email" placeholder="you@company.com" autocomplete="email" required>
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="phone">Phone / WhatsApp <span aria-hidden="true">*</span></label>
-              <input id="phone" name="phone" type="tel" placeholder="+91 98765 43210" autocomplete="tel" required>
-            </div>
-            <div class="field">
-              <label for="company">Company or website <span class="optional">(optional)</span></label>
-              <input id="company" name="company" type="text" placeholder="Company name or URL" autocomplete="organization">
-            </div>
-          </div>
-
-          <div class="field-row">
-            <div class="field">
-              <label for="offer_amount">Your offer <span aria-hidden="true">*</span></label>
-              <div class="offer-control">
-                <select id="currency" name="currency" aria-label="Currency">
-                  <option value="USD">USD</option>
-                  <option value="INR">INR</option>
-                  <option value="EUR">EUR</option>
-                  <option value="GBP">GBP</option>
-                </select>
-                <input id="offer_amount" name="offer_amount" type="number" min="1" step="1" placeholder="Amount" inputmode="numeric" required>
-              </div>
-            </div>
-            <div class="field">
-              <label for="intended_use">Intended use <span aria-hidden="true">*</span></label>
-              <select id="intended_use" name="intended_use" required>
-                <option value="" selected disabled>Select a category</option>
-                <option>Affiliate marketing</option>
-                <option>Personal finance or investment</option>
-                <option>Deals, coupons, or cashback</option>
-                <option>Digital commerce</option>
-                <option>Other</option>
-              </select>
-            </div>
-          </div>
-
-          <div class="field">
-            <label for="message">Message <span aria-hidden="true">*</span></label>
-            <textarea id="message" name="message" rows="4" placeholder="Tell us about your plans for the domain or ask a question." required></textarea>
-          </div>
-
-          <label class="consent">
-            <input type="checkbox" name="consent" value="Yes" required>
-            <span>I agree to be contacted by email or phone about this enquiry.</span>
-          </label>
-
-          <button class="btn btn-primary btn-submit" type="submit">
-            <span class="btn-label">Send quotation request</span>
-            <span class="spinner" aria-hidden="true"></span>
-          </button>
-
-          <p class="form-note">Your details are used only to respond to this enquiry. No payment is collected on this page.</p>
-          <div id="formStatus" class="form-status" role="status" aria-live="polite"></div>
+          <button class="btn btn-primary" type="submit">Search deals</button>
         </form>
 
-        <div class="form-success" id="formSuccess" tabindex="-1" hidden>
-          <span class="success-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
-          </span>
-          <h3>Request sent</h3>
-          <p>Thank you. Your quotation request is on its way to the owner. You will receive a reply at the email address you provided.</p>
-          <button class="btn btn-ghost" type="button" id="resetFormBtn">Send another request</button>
+        <div class="hero-meta">
+          <span class="meta-pill">7 deal categories</span>
+          <span class="meta-pill" data-updated data-updated-prefix="Updated">Updated daily</span>
+          <span class="meta-pill">Flipkart affiliate</span>
         </div>
+
+        <p class="affiliate-inline">We may earn a commission when you buy through our links. Prices and availability are set by Flipkart and may change.</p>
+      </div>
+
+      <aside class="spotlight" id="spotlight" aria-label="Today's spotlight deal">
+        <div class="spotlight-loading">
+          <span class="spotlight-kicker">Today's spotlight</span>
+          <div class="spotlight-skeleton" aria-hidden="true"></div>
+          <p>Finding today's best deal…</p>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section container" id="featured">
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Fresh finds</p>
+          <h2>Today's featured deals</h2>
+        </div>
+        <div class="carousel-controls" aria-label="Featured deals controls">
+          <button class="carousel-btn" id="carouselPrev" type="button" aria-label="Previous featured deals">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+          </button>
+          <button class="carousel-btn" id="carouselNext" type="button" aria-label="Next featured deals">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <p class="catalog-status" id="catalogStatus" role="status" aria-live="polite">Loading today's deals…</p>
+
+      <div class="carousel" id="featuredTrack" tabindex="0" aria-label="Featured deals carousel">
+        <div class="skeleton-card" aria-hidden="true"><div class="skeleton-media"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+        <div class="skeleton-card" aria-hidden="true"><div class="skeleton-media"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+        <div class="skeleton-card" aria-hidden="true"><div class="skeleton-media"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
+        <div class="skeleton-card" aria-hidden="true"><div class="skeleton-media"></div><div class="skeleton-line"></div><div class="skeleton-line short"></div></div>
       </div>
     </section>
 
-    <section class="highlights container" aria-label="Domain highlights">
-      <article class="highlight-card">
-        <span class="highlight-number">01</span>
-        <h3>A meaningful brand</h3>
-        <p>&ldquo;Munafa&rdquo; means profit and &ldquo;duniya&rdquo; means world &mdash; a name that communicates opportunity at a glance.</p>
+    <section class="section container search-results" id="searchResults" aria-live="polite" hidden>
+      <div class="section-head">
+        <div>
+          <p class="section-kicker">Search results</p>
+          <h2 id="resultsTitle">Deals</h2>
+        </div>
+        <button class="btn btn-ghost btn-sm" id="clearSearch" type="button">Clear search</button>
+      </div>
+      <div class="product-grid" id="searchResultsGrid"></div>
+      <div class="empty-state" id="emptyState" hidden>
+        <h3>No matching deals</h3>
+        <p>Try a different product, brand, or category.</p>
+      </div>
+    </section>
+
+    <div id="categorySections"></div>
+
+    <section class="container trust-strip" aria-label="How munafaduniya works">
+      <article class="trust-item">
+        <span class="trust-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M7 7V5h10v2M6 7l1 13h10l1-13"/><path d="M9 11v5M15 11v5"/></svg>
+        </span>
+        <h3>Curated daily</h3>
+        <p>Deals are refreshed from Flipkart's catalogue every day.</p>
       </article>
-      <article class="highlight-card">
-        <span class="highlight-number">02</span>
-        <h3>Niche-ready</h3>
-        <p>Built for affiliate marketing, personal finance, deals, coupons, cashback, and digital commerce.</p>
+      <article class="trust-item">
+        <span class="trust-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 5h16v12H4z"/><path d="M8 21h8M12 17v4"/><path d="M9 9l2 2 4-4"/></svg>
+        </span>
+        <h3>Buy on Flipkart</h3>
+        <p>Every link takes you directly to the product on Flipkart.</p>
       </article>
-      <article class="highlight-card">
-        <span class="highlight-number">03</span>
-        <h3>Simple transfer</h3>
-        <p>After an offer is accepted, the owner guides you through a secure domain transfer.</p>
+      <article class="trust-item">
+        <span class="trust-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v18M5 8h14M7 8l-2 5a3 3 0 006 0L9 8M17 8l-2 5a3 3 0 006 0l-2-5"/></svg>
+        </span>
+        <h3>Transparent links</h3>
+        <p>We may earn a commission at no extra cost to you.</p>
       </article>
+    </section>
+
+    <section class="container disclosure" id="disclosure">
+      <p><strong>Affiliate disclosure:</strong> munafaduniya.com is a participant in the Flipkart affiliate programme. We may earn a commission when you buy through links on this site, at no extra cost to you. Prices, discounts, and availability are set by Flipkart and can change at any time.</p>
+      <p>Flipkart is a trademark of Flipkart Private Limited. munafaduniya.com is an independent deals site and is not owned by Flipkart.</p>
     </section>
   </main>
 
   <footer class="site-footer">
-    <div class="container footer-inner">
-      <p class="footer-brand">
-        <img src="logo.png" alt="" width="22" height="22">
-        <span>&copy; <span id="year">2026</span> munafaduniya.com. All rights reserved.</span>
-      </p>
-      <p class="footer-contact">Enquiries: <a href="mailto:munafaduniya@gmail.com">munafaduniya@gmail.com</a></p>
+    <div class="container footer-grid">
+      <div class="footer-brand-col">
+        <a class="brand" href="index.html" aria-label="munafaduniya home">
+          <img class="brand-logo" src="logo.png" alt="" width="40" height="40">
+          <span class="brand-name">munafaduniya<span>.com</span></span>
+        </a>
+        <p>Fresh Flipkart deals across the things you buy every day, gathered in one calm, simple place.</p>
+        <p class="footer-contact">Questions or partnership enquiries?<br><a href="mailto:munafaduniya@gmail.com">munafaduniya@gmail.com</a></p>
+      </div>
+
+      <div class="footer-links">
+        <h3>Categories</h3>
+        <a href="#cat-mobiles">Mobiles</a>
+        <a href="#cat-electronics">Electronics</a>
+        <a href="#cat-fashion">Fashion</a>
+        <a href="#cat-home">Home</a>
+        <a href="#cat-beauty">Beauty</a>
+        <a href="#cat-sports">Sports</a>
+        <a href="#cat-appliances">Appliances</a>
+      </div>
+
+      <div class="footer-links">
+        <h3>Site</h3>
+        <a href="#featured">Today's deals</a>
+        <a href="contact.html">Contact us</a>
+        <a href="#disclosure">Affiliate disclosure</a>
+        <a href="https://www.flipkart.com" target="_blank" rel="noopener">Shop on Flipkart</a>
+      </div>
+    </div>
+
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> munafaduniya.com. All rights reserved.</p>
+      <p>Deals refreshed <span data-updated>daily</span>. Prices are subject to change on Flipkart.</p>
     </div>
   </footer>
+
+  <noscript>
+    <div class="container no-script-notice">Enable JavaScript to browse today's deals. You can still <a href="mailto:munafaduniya@gmail.com">email us</a>.</div>
+  </noscript>
 
   <script src="script.js"></script>
 </body>
