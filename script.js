@@ -31,6 +31,72 @@
 
   applyTheme(root.dataset.theme === "light" ? "light" : "dark");
 
+  var prefersReducedMotion = window.matchMedia(
+    "(prefers-reduced-motion: reduce)"
+  ).matches;
+  var revealObserver = null;
+
+  function initRevealAnimations() {
+    if (prefersReducedMotion || !("IntersectionObserver" in window)) {
+      return;
+    }
+
+    revealObserver = new IntersectionObserver(
+      function (entries) {
+        entries.forEach(function (entry) {
+          if (!entry.isIntersecting) {
+            return;
+          }
+
+          var element = entry.target;
+          revealObserver.unobserve(element);
+          element.classList.add("is-visible");
+
+          function finishReveal(event) {
+            if (event.target !== element) {
+              return;
+            }
+            element.classList.remove("reveal", "is-visible");
+            element.style.removeProperty("--reveal-delay");
+            element.removeEventListener("animationend", finishReveal);
+          }
+
+          element.addEventListener("animationend", finishReveal);
+        });
+      },
+      { threshold: 0.12, rootMargin: "0px 0px -36px 0px" }
+    );
+  }
+
+  function observeReveals(scope) {
+    if (!revealObserver) {
+      return;
+    }
+
+    var elements = (scope || document).querySelectorAll(
+      ".section-head, .product-card, .disclosure, .contact-panel, .form-card, .thanks-card"
+    );
+    var index = 0;
+
+    Array.prototype.forEach.call(elements, function (element) {
+      if (element.dataset.revealReady === "true") {
+        return;
+      }
+
+      element.dataset.revealReady = "true";
+      element.classList.add("reveal");
+      element.style.setProperty(
+        "--reveal-delay",
+        Math.min(index, 8) * 45 + "ms"
+      );
+      index += 1;
+      revealObserver.observe(element);
+    });
+  }
+
+  initRevealAnimations();
+  observeReveals(document);
+
   if (themeToggle) {
     themeToggle.addEventListener("click", function () {
       var next = root.dataset.theme === "light" ? "dark" : "light";
@@ -190,31 +256,6 @@
     var spotlight = document.getElementById("spotlight");
     var categorySections = document.getElementById("categorySections");
     var catalogStatus = document.getElementById("catalogStatus");
-    var searchForm = document.getElementById("searchForm");
-    var searchInput = document.getElementById("searchInput");
-    var searchResults = document.getElementById("searchResults");
-    var searchResultsGrid = document.getElementById("searchResultsGrid");
-    var resultsTitle = document.getElementById("resultsTitle");
-    var searchStatus = document.getElementById("searchStatus");
-    var emptyState = document.getElementById("emptyState");
-    var emptyTitle = document.getElementById("emptyTitle");
-    var emptyText = document.getElementById("emptyText");
-    var clearSearchBtn = document.getElementById("clearSearch");
-    var featuredSection = document.getElementById("featured");
-    var spotlightSection = document.getElementById("bestDeals");
-    var searchApiMeta = document.querySelector(
-      'meta[name="munafaduniya-search-api"]'
-    );
-    var searchApiUrl = String(
-      window.MUNAFADUNIYA_SEARCH_API ||
-        (searchApiMeta && searchApiMeta.content) ||
-        ""
-    ).trim();
-    var searchHint = document.querySelector(".search-hint");
-    if (searchHint && !searchApiUrl) {
-      searchHint.textContent =
-        "Search today's deals by product, brand, category, or key spec.";
-    }
     var carouselPrev = document.getElementById("carouselPrev");
     var carouselNext = document.getElementById("carouselNext");
     var carouselControls = carouselPrev
@@ -224,9 +265,6 @@
     var catalog = null;
     var products = [];
     var productById = Object.create(null);
-    var liveSearchCache = Object.create(null);
-    var liveSearchController = null;
-    var searchSequence = 0;
     var carouselTimer = null;
     var carouselPaused = false;
     var spotlightTimer = null;
@@ -764,6 +802,7 @@
         .join("");
 
       attachImageFallbacks(carousel);
+      observeReveals(carousel);
       if (catalogStatus) {
         catalogStatus.hidden = true;
       }
@@ -831,6 +870,7 @@
 
       categorySections.innerHTML = markup;
       attachImageFallbacks(categorySections);
+      observeReveals(categorySections);
     }
 
     function updateCategoryChips() {
@@ -932,391 +972,6 @@
       }, 4500);
     }
 
-    function searchLocal(term) {
-      return products
-        .filter(function (product) {
-          return (
-            (product.title || "").toLowerCase().indexOf(term) !== -1 ||
-            (product.brand || "").toLowerCase().indexOf(term) !== -1 ||
-            (product.categoryLabel || "").toLowerCase().indexOf(term) !== -1 ||
-            (product.categoryPath || "").toLowerCase().indexOf(term) !== -1 ||
-            (Array.isArray(product.keySpecs)
-              ? product.keySpecs.join(" ").toLowerCase().indexOf(term) !== -1
-              : false)
-          );
-        })
-        .sort(function (a, b) {
-          return (b.discount || 0) - (a.discount || 0) || (b.price || 0) - (a.price || 0);
-        });
-    }
-
-    function setSearchStatus(message) {
-      if (!searchStatus) {
-        return;
-      }
-      searchStatus.textContent = message || "";
-      searchStatus.hidden = !message;
-    }
-
-    function setEmptyState(title, text, visible) {
-      if (emptyTitle) {
-        emptyTitle.textContent = title;
-      }
-      if (emptyText) {
-        emptyText.textContent = text;
-      }
-      if (emptyState) {
-        emptyState.hidden = !visible;
-      }
-    }
-
-    function hideDealsForSearch() {
-      if (spotlightSection) {
-        spotlightSection.hidden = true;
-      }
-      if (featuredSection) {
-        featuredSection.hidden = true;
-      }
-      if (categorySections) {
-        categorySections.hidden = true;
-      }
-    }
-
-    function showDealsAfterSearch() {
-      if (spotlightSection) {
-        spotlightSection.hidden = false;
-      }
-      if (featuredSection) {
-        featuredSection.hidden = false;
-      }
-      if (categorySections) {
-        categorySections.hidden = false;
-      }
-    }
-
-    function renderSearchResults(matches, query, source) {
-      var count = matches.length;
-      var label = String(query || "").trim();
-      if (resultsTitle) {
-        resultsTitle.textContent =
-          count +
-          " deal" +
-          (count === 1 ? "" : "s") +
-          (source === "live" ? " on Flipkart" : "") +
-          " for \u201C" +
-          label +
-          "\u201D";
-      }
-
-      if (searchResultsGrid) {
-        searchResultsGrid.innerHTML = matches
-          .map(function (product) {
-            return productCard(product, { showCategory: true });
-          })
-          .join("");
-        attachImageFallbacks(searchResultsGrid);
-      }
-
-      setEmptyState(
-        "No matching deals",
-        "Try a different product, brand, or category.",
-        count === 0
-      );
-
-      if (searchResults) {
-        searchResults.hidden = false;
-      }
-      hideDealsForSearch();
-    }
-
-    function normalizeLiveProduct(product) {
-      if (!product || !product.id || !product.title) {
-        return null;
-      }
-
-      var url = safeProductUrl(product.url);
-      if (!url) {
-        return null;
-      }
-
-      var price = Number(product.price);
-      if (!Number.isFinite(price) || price <= 0) {
-        return null;
-      }
-
-      var mrp = Number(product.mrp);
-      if (!Number.isFinite(mrp) || mrp <= 0) {
-        mrp = price;
-      }
-
-      var discount = Number(product.discount);
-      if (!Number.isFinite(discount)) {
-        discount =
-          mrp > price ? Math.round(((mrp - price) / mrp) * 100) : 0;
-      }
-
-      var categoryLabel =
-        String(product.categoryLabel || product.category || "Flipkart").trim() ||
-        "Flipkart";
-      var category =
-        String(product.category || "deals")
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, "-")
-          .replace(/^-+|-+$/g, "") || "deals";
-
-      return {
-        id: String(product.id),
-        title: String(product.title).trim(),
-        brand: String(product.brand || "").trim(),
-        image: safeImageUrl(product.image),
-        url: url,
-        price: Math.round(price),
-        mrp: Math.round(mrp) || Math.round(price),
-        discount: Math.max(0, Math.round(discount)),
-        category: category,
-        categoryLabel: categoryLabel,
-        categoryPath: String(product.categoryPath || ""),
-        keySpecs: Array.isArray(product.keySpecs) ? product.keySpecs : []
-      };
-    }
-
-    function mergeLiveProducts(items) {
-      var merged = [];
-      items.forEach(function (raw) {
-        var product = normalizeLiveProduct(raw);
-        if (!product) {
-          return;
-        }
-
-        var existing = productById[product.id];
-        if (existing) {
-          merged.push(existing);
-          return;
-        }
-
-        productById[product.id] = product;
-        products.push(product);
-        merged.push(product);
-      });
-      return merged;
-    }
-
-    function fetchLiveSearch(term) {
-      if (liveSearchCache[term]) {
-        return Promise.resolve(liveSearchCache[term]);
-      }
-
-      if (!searchApiUrl) {
-        return Promise.reject(new Error("Live search is not configured"));
-      }
-
-      var url;
-      try {
-        url = new URL(searchApiUrl, window.location.href);
-      } catch (error) {
-        return Promise.reject(new Error("Live search is not configured"));
-      }
-      if (url.protocol !== "https:" && url.protocol !== "http:") {
-        return Promise.reject(new Error("Live search is not configured"));
-      }
-      url.searchParams.set("q", term);
-
-      if (liveSearchController) {
-        liveSearchController.abort();
-      }
-
-      var controller =
-        typeof AbortController !== "undefined" ? new AbortController() : null;
-      liveSearchController = controller;
-
-      var options = { headers: { Accept: "application/json" } };
-      if (controller) {
-        options.signal = controller.signal;
-      }
-
-      return fetch(url.toString(), options)
-        .then(function (response) {
-          if (!response.ok) {
-            throw new Error("Live search HTTP " + response.status);
-          }
-          return response.json();
-        })
-        .then(function (payload) {
-          var items = Array.isArray(payload)
-            ? payload
-            : payload && Array.isArray(payload.products)
-              ? payload.products
-              : [];
-          var normalized = mergeLiveProducts(items);
-          liveSearchCache[term] = normalized;
-          return normalized;
-        })
-        .finally(function () {
-          if (liveSearchController === controller) {
-            liveSearchController = null;
-          }
-        });
-    }
-
-    function runLiveSearch(term, query, sequence) {
-      setSearchStatus("No match in today's list. Checking Flipkart live\u2026");
-      setEmptyState("", "", false);
-
-      fetchLiveSearch(term)
-        .then(function (liveProducts) {
-          if (sequence !== searchSequence) {
-            return;
-          }
-
-          var matches = liveProducts.slice().sort(function (a, b) {
-            return (
-              (b.discount || 0) - (a.discount || 0) ||
-              (b.price || 0) - (a.price || 0)
-            );
-          });
-
-          if (!matches.length) {
-            renderSearchResults([], query, "live");
-            setEmptyState(
-              "No matching deals on Flipkart",
-              "Try a different product, brand, or category.",
-              true
-            );
-            setSearchStatus("Flipkart returned no matches for this search.");
-            return;
-          }
-
-          renderSearchResults(matches, query, "live");
-          setSearchStatus(
-            "Found " +
-              matches.length +
-              " live Flipkart deal" +
-              (matches.length === 1 ? "" : "s") +
-              "."
-          );
-        })
-        .catch(function (error) {
-          if (error && error.name === "AbortError") {
-            return;
-          }
-          if (sequence !== searchSequence) {
-            return;
-          }
-
-          var notConfigured = error && /not configured/i.test(error.message);
-          renderSearchResults([], query, "error");
-          if (notConfigured) {
-            setEmptyState(
-              "Live search is not set up yet",
-              "No match in today's list. The optional Flipkart live-search endpoint has not been configured.",
-              true
-            );
-            setSearchStatus("Add the search worker URL to enable live results.");
-          } else {
-            setEmptyState(
-              "Live search unavailable",
-              "No match in today's list, and Flipkart live search could not be reached. Please try again.",
-              true
-            );
-            setSearchStatus("Live search is temporarily unavailable.");
-          }
-        });
-    }
-
-    function showSearch(query, options) {
-      options = options || {};
-      var raw = String(query || "").trim();
-      var term = raw.toLowerCase();
-      if (!term) {
-        clearSearch();
-        return;
-      }
-
-      if (term.length < 2) {
-        renderSearchResults([], raw, "local");
-        setEmptyState(
-          "Keep typing",
-          "Enter at least 2 characters to search.",
-          true
-        );
-        setSearchStatus("Type at least 2 characters.");
-        return;
-      }
-
-      searchSequence += 1;
-      var sequence = searchSequence;
-
-      if (liveSearchController) {
-        liveSearchController.abort();
-        liveSearchController = null;
-      }
-
-      var matches = searchLocal(term);
-      if (matches.length > 0) {
-        renderSearchResults(matches, raw, "local");
-        setSearchStatus("");
-        if (options.shouldScroll && searchResults) {
-          searchResults.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        return;
-      }
-
-      if (!options.allowLive) {
-        renderSearchResults([], raw, "local");
-        setEmptyState(
-          "No match in today's list",
-          "Press Search to check Flipkart live, or try a different product or brand.",
-          true
-        );
-        setSearchStatus("No match in today's deals.");
-        if (options.shouldScroll && searchResults) {
-          searchResults.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-        return;
-      }
-
-      renderSearchResults([], raw, "live");
-      if (resultsTitle) {
-        resultsTitle.textContent =
-          "Searching Flipkart for \u201C" + raw + "\u201D\u2026";
-      }
-      if (emptyState) {
-        emptyState.hidden = true;
-      }
-      setSearchStatus("No match in today's list. Checking Flipkart live\u2026");
-      if (options.shouldScroll && searchResults) {
-        searchResults.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-      runLiveSearch(term, raw, sequence);
-    }
-
-    function clearSearch() {
-      searchSequence += 1;
-      if (liveSearchController) {
-        liveSearchController.abort();
-        liveSearchController = null;
-      }
-      if (searchInput) {
-        searchInput.value = "";
-      }
-      if (searchResults) {
-        searchResults.hidden = true;
-      }
-      showDealsAfterSearch();
-      if (searchResultsGrid) {
-        searchResultsGrid.innerHTML = "";
-      }
-      setEmptyState(
-        "No matching deals",
-        "Try a different product, brand, or category.",
-        false
-      );
-      setSearchStatus("");
-      if (resultsTitle) {
-        resultsTitle.textContent = "Deals";
-      }
-    }
-
     function debounce(callback, wait) {
       var timeout;
       return function () {
@@ -1328,58 +983,6 @@
         }, wait);
       };
     }
-
-    if (searchForm && searchInput) {
-      searchForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-        showSearch(searchInput.value, {
-          allowLive: true,
-          shouldScroll: true
-        });
-      });
-
-      searchInput.addEventListener(
-        "input",
-        debounce(function () {
-          var query = searchInput.value.trim();
-          if (query.length >= 2) {
-            showSearch(query, {
-              allowLive: true,
-              shouldScroll: false
-            });
-          } else {
-            clearSearch();
-          }
-        }, 450)
-      );
-    }
-
-    if (clearSearchBtn) {
-      clearSearchBtn.addEventListener("click", function () {
-        clearSearch();
-        if (searchInput) {
-          searchInput.focus();
-        }
-      });
-    }
-
-    document.addEventListener("click", function (event) {
-      var link = event.target.closest('a[href^="#cat-"]');
-      if (!link || !searchResults || searchResults.hidden) {
-        return;
-      }
-
-      event.preventDefault();
-      var target = link.getAttribute("href");
-      clearSearch();
-
-      window.setTimeout(function () {
-        var section = target ? document.querySelector(target) : null;
-        if (section) {
-          section.scrollIntoView({ behavior: "smooth", block: "start" });
-        }
-      }, 0);
-    });
 
     if (categorySections) {
       categorySections.addEventListener("click", function (event) {
