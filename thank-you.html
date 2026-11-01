@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Thank you — munafaduniya.com</title>
+  <meta name="description" content="Your quotation request for munafaduniya.com has been received.">
+  <meta name="theme-color" content="#0d0c0b" id="themeColor">
+  <meta name="robots" content="noindex">
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var stored = localStorage.getItem("theme");
+        theme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (error) {
+        theme = "dark";
+      }
+      document.documentElement.dataset.theme = theme;
+      var meta = document.getElementById("themeColor");
+      if (meta) {
+        meta.setAttribute("content", theme === "light" ? "#fdf9f4" : "#0d0c0b");
+      }
+    })();
+  </script>
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="/" aria-label="munafaduniya.com home">
+        <img class="brand-logo" src="logo.png" alt="" width="40" height="40">
+        <span class="brand-name">munafaduniya<span>.com</span></span>
+      </a>
+      <div class="header-actions">
+        <span class="sale-badge"><span class="sale-dot" aria-hidden="true"></span>Domain for sale</span>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="thanks container">
+    <div class="thanks-card">
+      <span class="success-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>
+      </span>
+      <p class="eyebrow">Request received</p>
+      <h1>Thank you.</h1>
+      <p class="lede">Your quotation request has been sent to the owner of munafaduniya.com. You will receive a reply at the email address you provided.</p>
+      <a class="btn btn-primary" href="/">Back to the offer page</a>
+      <p class="form-note">Need to add something? Email <a href="mailto:munafaduniya@gmail.com">munafaduniya@gmail.com</a>.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p class="footer-brand">
+        <img src="logo.png" alt="" width="22" height="22">
+        <span>&copy; <span id="year">2026</span> munafaduniya.com. All rights reserved.</span>
+      </p>
+      <p class="footer-contact">Enquiries: <a href="mailto:munafaduniya@gmail.com">munafaduniya@gmail.com</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
