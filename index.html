@@ -6,6 +6,8 @@
   <title>munafaduniya — Fresh Flipkart deals across mobiles, electronics, fashion and more</title>
   <meta name="description" content="Discover fresh Flipkart deals on mobiles, electronics, fashion, home essentials, beauty, sports, and appliances. Curated daily, with direct links to Flipkart.">
   <meta name="theme-color" content="#0d0c0b" id="themeColor">
+  <!-- Optional live search worker URL; see README. Leave blank to search the daily catalog only. -->
+  <meta name="munafaduniya-search-api" content="">
   <script>
     (function () {
       var theme = "dark";
@@ -35,7 +37,7 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body data-page="home">
-  <a class="skip-link" href="#featured">Skip to today's deals</a>
+  <a class="skip-link" href="#bestDeals">Skip to today's best deals</a>
 
   <header class="site-header">
     <div class="container header-inner">
@@ -75,33 +77,24 @@
   </header>
 
   <main id="top">
-    <section class="hero container">
-      <div class="hero-copy">
-        <p class="eyebrow">Flipkart deals, handpicked</p>
-        <h1>Smart deals for your <span class="highlight">everyday world.</span></h1>
-        <p class="lede">Fresh offers on mobiles, electronics, fashion, home essentials, beauty, sports, and appliances — gathered in one simple place.</p>
+    <h1 class="visually-hidden">Flipkart deals on munafaduniya</h1>
 
-        <form class="search-form" id="searchForm" role="search">
-          <div class="search-field">
-            <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <circle cx="11" cy="11" r="7"/>
-              <path d="M20 20l-3.5-3.5"/>
-            </svg>
-            <label class="visually-hidden" for="searchInput">Search deals</label>
-            <input id="searchInput" name="q" type="search" placeholder="Search products, brands, or categories" autocomplete="off" enterkeyhint="search">
-          </div>
-          <button class="btn btn-primary" type="submit">Search deals</button>
-        </form>
-
-        <div class="hero-meta">
-          <span class="meta-pill">7 deal categories</span>
-          <span class="meta-pill" data-updated data-updated-prefix="Updated">Updated daily</span>
-          <span class="meta-pill">Flipkart affiliate</span>
+    <section class="container search-band" aria-label="Search deals">
+      <form class="search-form" id="searchForm" role="search">
+        <div class="search-field">
+          <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="11" cy="11" r="7"/>
+            <path d="M20 20l-3.5-3.5"/>
+          </svg>
+          <label class="visually-hidden" for="searchInput">Search products</label>
+          <input id="searchInput" name="q" type="search" placeholder="Search products, brands, or categories" autocomplete="off" enterkeyhint="search">
         </div>
+        <button class="btn btn-primary" type="submit">Search</button>
+      </form>
+      <p class="search-hint">Search today's deals first. If there's no match, we'll check Flipkart live.</p>
+    </section>
 
-        <p class="affiliate-inline">We may earn a commission when you buy through our links. Prices and availability are set by Flipkart and may change.</p>
-      </div>
-
+    <section class="container spotlight-section" id="bestDeals">
       <aside class="spotlight" id="spotlight" aria-roledescription="carousel" aria-label="Today's best deals">
         <div class="spotlight-loading">
           <span class="spotlight-kicker">Today's best deals</span>
@@ -145,10 +138,11 @@
         </div>
         <button class="btn btn-ghost btn-sm" id="clearSearch" type="button">Clear search</button>
       </div>
+      <p class="search-status" id="searchStatus" role="status" aria-live="polite" hidden></p>
       <div class="product-grid" id="searchResultsGrid"></div>
       <div class="empty-state" id="emptyState" hidden>
-        <h3>No matching deals</h3>
-        <p>Try a different product, brand, or category.</p>
+        <h3 id="emptyTitle">No matching deals</h3>
+        <p id="emptyText">Try a different product, brand, or category.</p>
       </div>
     </section>
 
