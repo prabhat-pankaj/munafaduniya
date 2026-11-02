@@ -269,10 +269,6 @@
     var carouselPaused = false;
     var spotlightTimer = null;
     var spotlightPaused = false;
-    var spotlightIndex = 0;
-    var spotlightSlides = [];
-    var spotlightDots = [];
-    var spotlightCounter = null;
     var reduceMotion = window.matchMedia(
       "(prefers-reduced-motion: reduce)"
     ).matches;
@@ -537,7 +533,7 @@
         .slice(0, limit);
     }
 
-    function spotlightSlideMarkup(product, index, total) {
+    function bestDealCard(product, index) {
       var url = safeProductUrl(product.url);
       if (!url) {
         return "";
@@ -545,15 +541,16 @@
 
       var image = safeImageUrl(product.image);
       var category = product.categoryLabel || "Flipkart deal";
+      var brand = product.brand || category;
       var discount =
         product.discount > 0
-          ? '<span class="spotlight-discount">' +
+          ? '<span class="best-deal-badge">' +
             Math.round(product.discount) +
             "% off</span>"
           : "";
       var mrp =
         product.mrp > product.price
-          ? '<span class="spotlight-mrp">' +
+          ? '<span class="best-deal-mrp">' +
             formatPrice(product.mrp) +
             "</span>"
           : "";
@@ -561,58 +558,42 @@
         product.mrp > product.price ? product.mrp - product.price : 0;
       var savingLabel =
         savings > 0
-          ? '<span class="spotlight-save">Save ' +
+          ? '<span class="best-deal-save">Save ' +
             formatPrice(savings) +
             "</span>"
           : "";
-      var active = index === 0;
 
       return (
-        '<div class="spotlight-slide' +
-        (active ? " is-active" : "") +
-        '" role="group" aria-roledescription="slide" aria-label="' +
-        (index + 1) +
-        " of " +
-        total +
-        '"' +
-        (active ? "" : ' aria-hidden="true"') +
-        ">" +
-        '<div class="spotlight-card">' +
-        '<div class="spotlight-head"><span class="spotlight-kicker">Best deal \u00b7 ' +
-        escapeHtml(category) +
-        "</span>" +
-        discount +
-        "</div>" +
-        '<a class="spotlight-link" href="' +
+        '<a class="best-deal-card" href="' +
         escapeHtml(url) +
-        '" target="_blank" rel="sponsored noopener noreferrer">' +
-        '<div class="spotlight-media"><img src="' +
+        '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
+        escapeHtml(product.title + " on Flipkart") +
+        '" style="--deal-delay:' +
+        Math.min(index, 8) * 55 +
+        'ms">' +
+        discount +
+        '<div class="best-deal-media"><img src="' +
         escapeHtml(image) +
         '" alt="' +
         escapeHtml(product.title) +
         '" width="400" height="400" loading="' +
-        (active ? "eager" : "lazy") +
+        (index < 4 ? "eager" : "lazy") +
         '" decoding="async"></div>' +
-        '<div class="spotlight-body">' +
-        '<p class="spotlight-brand">' +
-        escapeHtml(product.brand || category) +
+        '<div class="best-deal-body">' +
+        '<p class="best-deal-brand">' +
+        escapeHtml(brand) +
         "</p>" +
-        '<h3 class="spotlight-title">' +
+        '<h3 class="best-deal-title">' +
         escapeHtml(product.title) +
         "</h3>" +
-        '<div class="spotlight-price-row"><span class="spotlight-price">' +
+        '<div class="best-deal-price-row"><span class="best-deal-price">' +
         formatPrice(product.price) +
         "</span>" +
         mrp +
+        "</div>" +
         savingLabel +
         "</div>" +
-        '<span class="spotlight-cta">View deal on Flipkart' +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>' +
-        "</span>" +
-        "</div>" +
-        "</a>" +
-        "</div>" +
-        "</div>"
+        "</a>"
       );
     }
 
@@ -623,77 +604,85 @@
       }
     }
 
-    function setSpotlightSlide(index, restart) {
-      if (!spotlightSlides.length) {
+    function spotlightStep() {
+      var card = spotlight.querySelector(".best-deal-card");
+      if (!card) {
+        return spotlight.clientWidth * 0.8;
+      }
+
+      var styles = window.getComputedStyle(spotlight);
+      var gap = parseFloat(styles.columnGap || styles.gap || "16") || 16;
+      return card.getBoundingClientRect().width + gap;
+    }
+
+    function scrollSpotlight(direction) {
+      var maxScroll = spotlight.scrollWidth - spotlight.clientWidth;
+      if (maxScroll <= 8) {
         return;
       }
 
-      spotlightIndex =
-        ((index % spotlightSlides.length) + spotlightSlides.length) %
-        spotlightSlides.length;
-
-      spotlightSlides.forEach(function (slide, slideIndex) {
-        var active = slideIndex === spotlightIndex;
-        slide.classList.toggle("is-active", active);
-        slide.setAttribute("aria-hidden", active ? "false" : "true");
-        if ("inert" in slide) {
-          slide.inert = !active;
-        }
-      });
-
-      spotlightDots.forEach(function (dot, dotIndex) {
-        var active = dotIndex === spotlightIndex;
-        dot.classList.toggle("is-active", active);
-        dot.setAttribute("aria-current", active ? "true" : "false");
-        dot.tabIndex = active ? 0 : -1;
-      });
-
-      if (spotlightCounter) {
-        spotlightCounter.textContent =
-          spotlightIndex + 1 + " / " + spotlightSlides.length;
+      if (direction > 0 && spotlight.scrollLeft >= maxScroll - 8) {
+        spotlight.scrollTo({ left: 0, behavior: "smooth" });
+        return;
       }
 
-      if (restart) {
-        startSpotlight();
+      if (direction < 0 && spotlight.scrollLeft <= 8) {
+        spotlight.scrollTo({ left: maxScroll, behavior: "smooth" });
+        return;
       }
+
+      spotlight.scrollBy({
+        left: spotlightStep() * direction,
+        behavior: "smooth"
+      });
+    }
+
+    function updateSpotlightControls() {
+      var controls = document.querySelector(
+        ".best-deals-actions .carousel-controls"
+      );
+      if (!controls) {
+        return;
+      }
+      controls.hidden = spotlight.scrollWidth <= spotlight.clientWidth + 8;
     }
 
     function startSpotlight() {
       stopSpotlight();
-      if (reduceMotion || spotlightSlides.length <= 1) {
+      if (reduceMotion || !spotlight) {
         return;
       }
 
       spotlightTimer = window.setInterval(function () {
-        if (spotlightPaused || document.hidden || !spotlight.offsetParent) {
+        if (
+          spotlightPaused ||
+          document.hidden ||
+          !spotlight.offsetParent ||
+          spotlight.scrollWidth <= spotlight.clientWidth + 8
+        ) {
           return;
         }
-        setSpotlightSlide(spotlightIndex + 1, false);
-      }, 5000);
+        scrollSpotlight(1);
+      }, 3800);
     }
 
     function bindSpotlightControls() {
       var prev = document.getElementById("spotlightPrev");
       var next = document.getElementById("spotlightNext");
 
-      spotlightDots.forEach(function (dot) {
-        dot.addEventListener("click", function () {
-          setSpotlightSlide(
-            parseInt(dot.getAttribute("data-spotlight-index"), 10),
-            true
-          );
-        });
-      });
-
-      if (prev) {
+      if (prev && prev.dataset.bound !== "true") {
+        prev.dataset.bound = "true";
         prev.addEventListener("click", function () {
-          setSpotlightSlide(spotlightIndex - 1, true);
+          scrollSpotlight(-1);
+          startSpotlight();
         });
       }
 
-      if (next) {
+      if (next && next.dataset.bound !== "true") {
+        next.dataset.bound = "true";
         next.addEventListener("click", function () {
-          setSpotlightSlide(spotlightIndex + 1, true);
+          scrollSpotlight(1);
+          startSpotlight();
         });
       }
     }
@@ -704,83 +693,26 @@
       }
 
       stopSpotlight();
-      spotlightSlides = [];
-      spotlightDots = [];
-      spotlightCounter = null;
-      spotlightIndex = 0;
 
       var carouselProducts = spotlightProducts.filter(function (product) {
         return product && safeProductUrl(product.url);
       });
 
-      var slides = carouselProducts
-        .map(function (product, index) {
-          return spotlightSlideMarkup(product, index, carouselProducts.length);
-        })
-        .filter(Boolean);
-
-      if (!slides.length) {
+      if (!carouselProducts.length) {
         spotlight.innerHTML =
-          '<div class="spotlight-loading"><span class="spotlight-kicker">Today\'s best deals</span><p>No best deals right now. Browse the deals below.</p></div>';
+          '<div class="best-deals-loading"><span class="best-deals-kicker">Today\'s best deals</span><p>No best deals right now. Browse the deals below.</p></div>';
         return;
       }
 
-      var dots = carouselProducts
+      spotlight.innerHTML = carouselProducts
         .map(function (product, index) {
-          return (
-            '<button class="spotlight-dot' +
-            (index === 0 ? " is-active" : "") +
-            '" type="button" aria-label="Show deal ' +
-            (index + 1) +
-            ": " +
-            escapeHtml(product.title) +
-            '" aria-current="' +
-            (index === 0 ? "true" : "false") +
-            '" tabindex="' +
-            (index === 0 ? "0" : "-1") +
-            '" data-spotlight-index="' +
-            index +
-            '"></button>'
-          );
+          return bestDealCard(product, index);
         })
         .join("");
 
-      var footer =
-        carouselProducts.length > 1
-          ? '<div class="spotlight-footer">' +
-            '<div class="spotlight-dots" role="group" aria-label="Choose a best deal">' +
-            dots +
-            "</div>" +
-            '<div class="spotlight-footer-end">' +
-            '<span class="spotlight-counter" id="spotlightCounter">1 / ' +
-            carouselProducts.length +
-            "</span>" +
-            '<div class="spotlight-nav">' +
-            '<button class="spotlight-arrow" id="spotlightPrev" type="button" aria-label="Previous best deal">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>' +
-            "</button>" +
-            '<button class="spotlight-arrow" id="spotlightNext" type="button" aria-label="Next best deal">' +
-            '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>' +
-            "</button>" +
-            "</div>" +
-            "</div>" +
-            "</div>"
-          : "";
-
-      spotlight.innerHTML =
-        '<div class="spotlight-slides">' + slides.join("") + "</div>" + footer;
-
-      spotlightSlides = Array.prototype.slice.call(
-        spotlight.querySelectorAll(".spotlight-slide")
-      );
-      spotlightDots = Array.prototype.slice.call(
-        spotlight.querySelectorAll(".spotlight-dot")
-      );
-      spotlightCounter = document.getElementById("spotlightCounter");
-
       attachImageFallbacks(spotlight);
       bindSpotlightControls();
-      setSpotlightSlide(0, false);
+      updateSpotlightControls();
       startSpotlight();
     }
 
@@ -1050,6 +982,7 @@
       });
       spotlight.addEventListener("pointerleave", function () {
         spotlightPaused = false;
+        startSpotlight();
       });
       spotlight.addEventListener("focusin", function () {
         spotlightPaused = true;
@@ -1057,15 +990,16 @@
       spotlight.addEventListener("focusout", function (event) {
         if (!spotlight.contains(event.relatedTarget)) {
           spotlightPaused = false;
+          startSpotlight();
         }
       });
       spotlight.addEventListener("keydown", function (event) {
         if (event.key === "ArrowRight") {
           event.preventDefault();
-          setSpotlightSlide(spotlightIndex + 1, true);
+          scrollSpotlight(1);
         } else if (event.key === "ArrowLeft") {
           event.preventDefault();
-          setSpotlightSlide(spotlightIndex - 1, true);
+          scrollSpotlight(-1);
         }
       });
     }
@@ -1078,6 +1012,7 @@
       "resize",
       debounce(function () {
         updateCarouselControls();
+        updateSpotlightControls();
       }, 150)
     );
 
@@ -1104,7 +1039,7 @@
 
         updateUpdatedDates(data.generatedAt);
 
-        var spotlightProducts = pickBestDeals(products, 7);
+        var spotlightProducts = pickBestDeals(products, 12);
         if (!spotlightProducts.length) {
           var fallbackSpotlight = productById[data.spotlight] || products[0];
           spotlightProducts = fallbackSpotlight ? [fallbackSpotlight] : [];
@@ -1172,7 +1107,7 @@
 
         if (spotlight) {
           spotlight.innerHTML =
-            '<div class="spotlight-loading"><span class="spotlight-kicker">Today\'s best deals</span><p>Deals are taking a short break. Please refresh in a moment.</p></div>';
+            '<div class="best-deals-loading"><span class="best-deals-kicker">Today\'s best deals</span><p>Deals are taking a short break. Please refresh in a moment.</p></div>';
         }
       });
   }
