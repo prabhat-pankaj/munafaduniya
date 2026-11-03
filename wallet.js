@@ -87,14 +87,16 @@ function renderHeader(user) {
   var firstName = name.trim().split(/\s+/)[0] || "Account";
   var initial = firstName.charAt(0).toUpperCase() || "A";
   slot.innerHTML =
+    '<a class="header-wallet" id="headerWallet" href="wallet.html" aria-current="page" aria-label="Open your wallet earnings">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h13a2 2 0 002-2v-2"/><path d="M21 12h-6a2 2 0 000 4h6z"/></svg>' +
+    '<strong class="header-wallet-amount" id="headerWalletAmount">₹0.00</strong></a>' +
     '<a class="auth-user" href="account.html" aria-label="Open your account">' +
     '<span class="auth-avatar" aria-hidden="true">' +
     escapeHtml(initial) +
     "</span>" +
     '<span class="auth-name">' +
     escapeHtml(firstName) +
-    "</span></a>" +
-    '<a class="auth-wallet-link" href="wallet.html" aria-current="page">Wallet</a>';
+    "</span></a>";
 }
 
 async function loadFirebase() {
@@ -158,6 +160,10 @@ function renderSummary(wallet) {
   document.getElementById("walletAvailable").textContent = money(
     values.availablePaise
   );
+  var headerAmount = document.getElementById("headerWalletAmount");
+  if (headerAmount) {
+    headerAmount.textContent = money(values.availablePaise);
+  }
   document.getElementById("walletPending").textContent = money(
     values.pendingPaise
   );

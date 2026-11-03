@@ -2,6 +2,7 @@ import { firebaseConfig, firebaseReady } from "./firebase-config.js";
 
 var fb = null;
 var confirmationResult = null;
+var authFlowActive = false;
 
 function escapeHtml(value) {
   return String(value == null ? "" : value).replace(/[&<>"']/g, function (
@@ -37,6 +38,24 @@ function setStatus(message, type) {
     (type === "success" ? " is-success" : "");
 }
 
+function redirectHome() {
+  window.location.replace("index.html");
+}
+
+function delay(ms) {
+  return new Promise(function (resolve) {
+    window.setTimeout(resolve, ms);
+  });
+}
+
+async function completeAuth(user, extra) {
+  try {
+    await Promise.race([saveProfile(user, extra || {}), delay(1500)]);
+  } finally {
+    redirectHome();
+  }
+}
+
 function friendlyAuthError(error) {
   var code = (error && error.code) || "";
   var messages = {
@@ -52,6 +71,16 @@ function friendlyAuthError(error) {
     "auth/popup-blocked": "Your browser blocked the sign-in popup. Allow popups and try again.",
     "auth/operation-not-allowed":
       "This sign-in method is not enabled in Firebase yet.",
+    "auth/configuration-not-found":
+      "Firebase Authentication is not set up for this project. In Firebase Console, open Authentication and click Get started.",
+    "auth/api-key-not-valid":
+      "The Firebase API key is invalid. Check firebase-config.js against the Web app settings.",
+    "auth/invalid-api-key":
+      "The Firebase API key is invalid. Check firebase-config.js against the Web app settings.",
+    "auth/app-not-authorized":
+      "This domain is not authorized to use Firebase Authentication.",
+    "auth/internal-error":
+      "Firebase returned an internal error. Check that Authentication is set up, then try again.",
     "auth/invalid-phone-number":
       "Enter a valid phone number, including the country code.",
     "auth/invalid-verification-code":
@@ -63,6 +92,9 @@ function friendlyAuthError(error) {
     "auth/network-request-failed":
       "Network error. Check your connection and try again."
   };
+  if (!messages[code]) {
+    console.warn("Unhandled Firebase Auth error:", code, error && error.message);
+  }
   return messages[code] || "Something went wrong. Please try again.";
 }
 
@@ -98,14 +130,38 @@ function renderHeaderAuth(user) {
   var firstName = name.trim().split(/\s+/)[0] || "Account";
   var initial = firstName.charAt(0).toUpperCase() || "A";
   slot.innerHTML =
+    '<a class="header-wallet" id="headerWallet" href="wallet.html" aria-label="Open your wallet earnings">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h13a2 2 0 002-2v-2"/><path d="M21 12h-6a2 2 0 000 4h6z"/></svg>' +
+    '<strong class="header-wallet-amount" id="headerWalletAmount">₹0.00</strong></a>' +
     '<a class="auth-user" href="account.html" aria-label="Open your account">' +
     '<span class="auth-avatar" aria-hidden="true">' +
     escapeHtml(initial) +
     "</span>" +
     '<span class="auth-name">' +
     escapeHtml(firstName) +
-    "</span></a>" +
-    '<a class="auth-wallet-link" href="wallet.html" aria-label="Wallet and earnings">Wallet</a>';
+    "</span></a>";
+
+  loadHeaderWallet(user);
+}
+
+async function loadHeaderWallet(user) {
+  if (!user || !fb || !fb.db) {
+    return;
+  }
+
+  try {
+    var snapshot = await fb.dbModule.getDoc(
+      fb.dbModule.doc(fb.db, "users", user.uid)
+    );
+    var amount = document.getElementById("headerWalletAmount");
+    if (!amount) {
+      return;
+    }
+    var wallet = snapshot.exists() ? snapshot.data().wallet || {} : {};
+    amount.textContent = formatPaise(wallet.availablePaise);
+  } catch (error) {
+    console.warn("Could not load wallet earnings.", error);
+  }
 }
 
 function formatPaise(paise) {
@@ -223,12 +279,13 @@ function initGoogleAuth(buttonId) {
   button.addEventListener("click", async function () {
     setStatus("");
     button.disabled = true;
+    authFlowActive = true;
     try {
       var provider = new fb.authModule.GoogleAuthProvider();
       var result = await fb.authModule.signInWithPopup(fb.auth, provider);
-      await saveProfile(result.user, {});
-      window.location.href = "account.html";
+      await completeAuth(result.user, {});
     } catch (error) {
+      authFlowActive = false;
       setStatus(friendlyAuthError(error), "error");
     } finally {
       button.disabled = false;
@@ -321,12 +378,13 @@ function initPhoneAuth() {
     }
 
     setLoading(otpForm, true, "Verify code");
+    authFlowActive = true;
 
     try {
       var result = await confirmationResult.confirm(code);
-      await saveProfile(result.user, {});
-      window.location.href = "account.html";
+      await completeAuth(result.user, {});
     } catch (error) {
+      authFlowActive = false;
       setStatus(friendlyAuthError(error), "error");
     } finally {
       setLoading(otpForm, false, "Verify code");
@@ -358,6 +416,7 @@ function initSignIn() {
 
     setStatus("");
     setLoading(form, true, "Sign in");
+    authFlowActive = true;
 
     try {
       var result = await fb.authModule.signInWithEmailAndPassword(
@@ -365,9 +424,9 @@ function initSignIn() {
         document.getElementById("signinEmail").value.trim(),
         document.getElementById("signinPassword").value
       );
-      await saveProfile(result.user, {});
-      window.location.href = "account.html";
+      await completeAuth(result.user, {});
     } catch (error) {
+      authFlowActive = false;
       setStatus(friendlyAuthError(error), "error");
     } finally {
       setLoading(form, false, "Sign in");
@@ -422,6 +481,7 @@ function initSignUp() {
 
     setStatus("");
     setLoading(form, true, "Create account");
+    authFlowActive = true;
 
     try {
       var credential = await fb.authModule.createUserWithEmailAndPassword(
@@ -436,9 +496,9 @@ function initSignUp() {
         });
       }
 
-      await saveProfile(credential.user, { name: name, phone: phone });
-      window.location.href = "account.html";
+      await completeAuth(credential.user, { name: name, phone: phone });
     } catch (error) {
+      authFlowActive = false;
       setStatus(friendlyAuthError(error), "error");
     } finally {
       setLoading(form, false, "Create account");
@@ -562,11 +622,8 @@ function handleAuthState(user) {
   if (page === "account") {
     renderAccount(user);
   } else if (page === "signin" || page === "signup") {
-    if (user) {
-      setStatus(
-        "You are already signed in. Open your account to continue.",
-        "success"
-      );
+    if (user && !authFlowActive) {
+      redirectHome();
     }
   }
 }

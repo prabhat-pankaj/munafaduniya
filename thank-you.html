@@ -37,11 +37,18 @@
         <span class="brand-name">munafaduniya</span>
       </a>
       <nav class="primary-nav" aria-label="Primary">
-        <a href="index.html">Deals</a>
+        <a href="index.html">Home</a>
         <a href="contact.html">Contact</a>
       </nav>
+      <form class="header-search" role="search" action="index.html" method="get">
+        <label class="visually-hidden" for="headerSearch">Search deals</label>
+        <svg class="header-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>
+        <input class="header-search-input" id="headerSearch" name="q" type="search" placeholder="Search deals" autocomplete="off">
+        <button class="header-search-btn" type="submit" aria-label="Search deals">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+        </button>
+      </form>
       <div class="header-actions">
-        <span class="live-badge"><span class="live-dot" aria-hidden="true"></span>Deals live</span>
         <div class="auth-slot" id="authSlot"><a class="auth-link" href="signin.html">Sign in</a></div>
         <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
           <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
