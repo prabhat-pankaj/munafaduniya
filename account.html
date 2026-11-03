@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your account — munafaduniya</title>
+  <meta name="description" content="Manage your munafaduniya account and saved Flipkart deals.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d0c0b" id="themeColor">
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var stored = localStorage.getItem("theme");
+        theme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (error) {
+        theme = "dark";
+      }
+      document.documentElement.dataset.theme = theme;
+      var meta = document.getElementById("themeColor");
+      if (meta) {
+        meta.setAttribute("content", theme === "light" ? "#fdf9f4" : "#0d0c0b");
+      }
+    })();
+  </script>
+  <link rel="canonical" href="https://www.munafaduniya.com/account.html">
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="account">
+  <a class="skip-link" href="#authMain">Skip to your account</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="munafaduniya home">
+        <img class="brand-logo" src="logo.png" alt="" width="40" height="40">
+        <span class="brand-name">munafaduniya</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="index.html#featured">Deals</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <span class="live-badge"><span class="live-dot" aria-hidden="true"></span>Deals live</span>
+        <div class="auth-slot" id="authSlot"><a class="auth-link" href="signin.html">Sign in</a></div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="authMain" class="page-main container auth-main">
+    <section class="auth-head">
+      <p class="eyebrow">Your space</p>
+      <h1>Your <span class="highlight">account</span>.</h1>
+      <p class="lede">Manage your details and keep track of the deals you love.</p>
+    </section>
+
+    <div class="auth-config-notice auth-config-notice--standalone" id="authConfigNotice" hidden>
+      <strong>Firebase is not configured yet.</strong>
+      <p>Add your project keys to <code>firebase-config.js</code> to enable accounts.</p>
+    </div>
+
+    <p class="auth-loading" id="accountLoading" role="status">Loading your account…</p>
+
+    <div class="form-card auth-card auth-signed-out" id="accountSignedOut" hidden>
+      <span class="auth-out-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6.5 8-6.5s8 2.5 8 6.5"/></svg>
+      </span>
+      <h2>You are not signed in</h2>
+      <p>Sign in or create an account to save deals and keep your picks in one place.</p>
+      <div class="auth-actions">
+        <a class="btn btn-primary" href="signin.html">Sign in</a>
+        <a class="btn btn-ghost" href="signup.html">Create account</a>
+      </div>
+    </div>
+
+    <div class="form-card auth-card auth-signed-in" id="accountSignedIn" hidden>
+      <div class="auth-profile">
+        <span class="auth-profile-avatar" id="accountAvatar" aria-hidden="true">M</span>
+        <div>
+          <p class="form-kicker">Signed in</p>
+          <h2 id="accountName">Member</h2>
+          <p class="auth-profile-provider" id="accountProvider">Firebase account</p>
+        </div>
+      </div>
+
+      <dl class="auth-details">
+        <div>
+          <dt>Email</dt>
+          <dd id="accountEmail">Not provided</dd>
+        </div>
+        <div>
+          <dt>Phone</dt>
+          <dd id="accountPhone">Not provided</dd>
+        </div>
+        <div>
+          <dt>Member since</dt>
+          <dd id="accountMemberSince">Today</dd>
+        </div>
+      </dl>
+
+      <div class="form-card wallet-card" id="accountWalletCard" hidden>
+        <div class="wallet-card-head">
+          <div>
+            <p class="form-kicker">Earnings</p>
+            <h2>Wallet &amp; earnings</h2>
+          </div>
+          <a class="wallet-link" href="wallet.html">View wallet</a>
+        </div>
+        <div class="wallet-inline">
+          <div class="wallet-inline-item">
+            <span class="wallet-inline-label">Available</span>
+            <strong id="accountWalletAvailable">₹0.00</strong>
+          </div>
+          <div class="wallet-inline-item">
+            <span class="wallet-inline-label">Pending</span>
+            <strong id="accountWalletPending">₹0.00</strong>
+          </div>
+          <div class="wallet-inline-item">
+            <span class="wallet-inline-label">Lifetime</span>
+            <strong id="accountWalletLifetime">₹0.00</strong>
+          </div>
+        </div>
+        <p class="form-note">Earnings are estimates based on Flipkart reports; actual credit dates depend on Flipkart's approval/payout schedule.</p>
+      </div>
+
+      <div class="auth-actions">
+        <a class="btn btn-primary" href="wallet.html">Go to wallet</a>
+        <a class="btn btn-ghost" href="index.html#featured">Browse deals</a>
+        <button class="btn btn-ghost" type="button" id="signoutBtn">Sign out</button>
+      </div>
+
+      <p class="form-note">Your profile is stored securely in Firebase, not on GitHub. Passwords are handled by Firebase Authentication and are never stored in this website's files.</p>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> munafaduniya. All rights reserved.</p>
+      <p><a href="index.html">Back to deals</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script type="module" src="auth.js"></script>
+</body>
+</html>

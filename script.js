@@ -114,6 +114,64 @@
     year.textContent = new Date().getFullYear();
   }
 
+  var affiliateUid = null;
+
+  function isFlipkartUrl(url) {
+    return (
+      url.protocol === "https:" && /(^|\.)flipkart\.com$/.test(url.hostname)
+    );
+  }
+
+  function withAffiliateTracking(rawUrl) {
+    try {
+      var url = new URL(rawUrl);
+      if (!isFlipkartUrl(url)) {
+        return rawUrl;
+      }
+
+      if (affiliateUid) {
+        url.searchParams.set("affExtParam1", affiliateUid);
+      } else {
+        url.searchParams.delete("affExtParam1");
+      }
+      return url.href;
+    } catch (error) {
+      return rawUrl;
+    }
+  }
+
+  function applyAffiliateTracking(scope) {
+    (scope || document)
+      .querySelectorAll('a[href*="flipkart.com"]')
+      .forEach(function (link) {
+        link.href = withAffiliateTracking(link.href);
+      });
+  }
+
+  function setAffiliateUid(uid) {
+    affiliateUid =
+      typeof uid === "string" && /^[A-Za-z0-9]{6,128}$/.test(uid) ? uid : null;
+    applyAffiliateTracking(document);
+  }
+
+  window.__munaSetAffiliateUid = setAffiliateUid;
+
+  document.addEventListener("muna:auth", function (event) {
+    setAffiliateUid(event.detail && event.detail.uid);
+  });
+
+  document.addEventListener(
+    "click",
+    function (event) {
+      var target = event.target;
+      var link = target && target.closest ? target.closest("a[href]") : null;
+      if (link) {
+        link.href = withAffiliateTracking(link.href);
+      }
+    },
+    true
+  );
+
   var form = document.querySelector("form[data-ajax-form]");
   if (form) {
     initForm(form);
@@ -411,7 +469,7 @@
 
       return (
         '<a class="product-card" href="' +
-        escapeHtml(url) +
+        escapeHtml(withAffiliateTracking(url)) +
         '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
         escapeHtml(product.title + " on Flipkart") +
         '"' +
@@ -565,7 +623,7 @@
 
       return (
         '<a class="best-deal-card" href="' +
-        escapeHtml(url) +
+        escapeHtml(withAffiliateTracking(url)) +
         '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
         escapeHtml(product.title + " on Flipkart") +
         '" style="--deal-delay:' +
@@ -638,13 +696,14 @@
     }
 
     function updateSpotlightControls() {
-      var controls = document.querySelector(
-        ".best-deals-actions .carousel-controls"
-      );
-      if (!controls) {
+      var prev = document.getElementById("spotlightPrev");
+      var next = document.getElementById("spotlightNext");
+      if (!prev || !next) {
         return;
       }
-      controls.hidden = spotlight.scrollWidth <= spotlight.clientWidth + 8;
+      var hasOverflow = spotlight.scrollWidth > spotlight.clientWidth + 8;
+      prev.hidden = !hasOverflow;
+      next.hidden = !hasOverflow;
     }
 
     function startSpotlight() {

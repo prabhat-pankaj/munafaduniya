@@ -1,0 +1,232 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Wallet &amp; earnings — munafaduniya</title>
+  <meta name="description" content="Track your Flipkart deal earnings, estimated credit dates, and withdrawal requests on munafaduniya.">
+  <meta name="robots" content="noindex, nofollow">
+  <meta name="theme-color" content="#0d0c0b" id="themeColor">
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var stored = localStorage.getItem("theme");
+        theme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (error) {
+        theme = "dark";
+      }
+      document.documentElement.dataset.theme = theme;
+      var meta = document.getElementById("themeColor");
+      if (meta) {
+        meta.setAttribute("content", theme === "light" ? "#fdf9f4" : "#0d0c0b");
+      }
+    })();
+  </script>
+  <link rel="canonical" href="https://www.munafaduniya.com/wallet.html">
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="wallet">
+  <a class="skip-link" href="#walletMain">Skip to your wallet</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="munafaduniya home">
+        <img class="brand-logo" src="logo.png" alt="" width="40" height="40">
+        <span class="brand-name">munafaduniya</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="index.html#featured">Deals</a>
+        <a href="account.html">Account</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <span class="live-badge"><span class="live-dot" aria-hidden="true"></span>Deals live</span>
+        <div class="auth-slot" id="authSlot"><a class="auth-link" href="signin.html">Sign in</a></div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="walletMain" class="page-main container auth-main wallet-main">
+    <section class="auth-head">
+      <p class="eyebrow">Your earnings</p>
+      <h1>Wallet &amp; <span class="highlight">earnings</span>.</h1>
+      <p class="lede">See the share you have earned from Flipkart orders, track pending approvals, and request a withdrawal.</p>
+    </section>
+
+    <div class="auth-config-notice auth-config-notice--standalone" id="authConfigNotice" hidden>
+      <strong>Firebase is not configured yet.</strong>
+      <p>Add your project keys to <code>firebase-config.js</code> to enable the wallet.</p>
+    </div>
+
+    <p class="auth-loading" id="walletLoading" role="status">Loading your wallet…</p>
+
+    <div class="form-card auth-card auth-signed-out" id="walletSignedOut" hidden>
+      <span class="auth-out-icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7h18v12H3z"/><path d="M3 7V5h12v2M16 12h5"/><circle cx="16.5" cy="12" r="1"/></svg>
+      </span>
+      <h2>Sign in to see your earnings</h2>
+      <p>When you shop through a tracked Flipkart link, your commission share appears here after Flipkart reports it.</p>
+      <div class="auth-actions">
+        <a class="btn btn-primary" href="signin.html">Sign in</a>
+        <a class="btn btn-ghost" href="signup.html">Create account</a>
+      </div>
+    </div>
+
+    <div id="walletSignedIn" hidden>
+      <div class="wallet-stats" aria-label="Wallet summary">
+        <article class="wallet-stat wallet-stat--available">
+          <span class="wallet-stat-label">Available to withdraw</span>
+          <strong class="wallet-stat-value" id="walletAvailable">₹0.00</strong>
+          <span class="wallet-stat-note">Credited and not reserved</span>
+        </article>
+        <article class="wallet-stat">
+          <span class="wallet-stat-label">Pending approval</span>
+          <strong class="wallet-stat-value" id="walletPending">₹0.00</strong>
+          <span class="wallet-stat-note">Awaiting Flipkart confirmation</span>
+        </article>
+        <article class="wallet-stat">
+          <span class="wallet-stat-label">Lifetime earned</span>
+          <strong class="wallet-stat-value" id="walletLifetime">₹0.00</strong>
+          <span class="wallet-stat-note">Approved orders and installs</span>
+        </article>
+        <article class="wallet-stat">
+          <span class="wallet-stat-label">Withdrawn</span>
+          <strong class="wallet-stat-value" id="walletWithdrawn">₹0.00</strong>
+          <span class="wallet-stat-note">Paid to you</span>
+        </article>
+      </div>
+
+      <p class="wallet-disclaimer">
+        Earnings are an internal ledger based on Flipkart's affiliate reports. Credit dates are estimates:
+        Flipkart approves orders and pays the affiliate account on its own schedule. The site cannot see a
+        "delivered" or exact payment date. Withdrawals are reviewed manually.
+      </p>
+
+      <div class="wallet-grid">
+        <section class="form-card wallet-card wallet-card--wide" aria-labelledby="earningsTitle">
+          <div class="wallet-card-head">
+            <div>
+              <p class="form-kicker">Activity</p>
+              <h2 id="earningsTitle">Earnings</h2>
+            </div>
+            <span class="wallet-pill" id="walletShareRate">50% share</span>
+          </div>
+          <div class="wallet-table-wrap">
+            <table class="wallet-table">
+              <thead>
+                <tr>
+                  <th scope="col">Order</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Order date</th>
+                  <th scope="col">Commission</th>
+                  <th scope="col">Your share</th>
+                  <th scope="col">Est. credit</th>
+                </tr>
+              </thead>
+              <tbody id="earningsBody">
+                <tr><td colspan="6" class="wallet-empty">Loading earnings…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <section class="form-card wallet-card" aria-labelledby="withdrawTitle">
+          <div class="wallet-card-head">
+            <div>
+              <p class="form-kicker">Payout</p>
+              <h2 id="withdrawTitle">Request withdrawal</h2>
+            </div>
+          </div>
+          <p class="form-note">Minimum ₹100. Requests stay reserved until an admin approves and pays them.</p>
+          <form id="withdrawForm" novalidate>
+            <div class="field">
+              <label for="withdrawAmount">Amount (₹)</label>
+              <input id="withdrawAmount" name="amount" type="number" min="100" step="0.01" inputmode="decimal" required>
+            </div>
+            <div class="field">
+              <label for="withdrawMethod">Payout method</label>
+              <select id="withdrawMethod" name="method">
+                <option value="upi">UPI</option>
+                <option value="bank">Bank account</option>
+              </select>
+            </div>
+            <div id="upiFields">
+              <div class="field">
+                <label for="withdrawUpi">UPI ID</label>
+                <input id="withdrawUpi" name="upiId" type="text" autocomplete="off" placeholder="name@bank">
+              </div>
+            </div>
+            <div id="bankFields" hidden>
+              <div class="field">
+                <label for="withdrawAccountName">Account holder name</label>
+                <input id="withdrawAccountName" name="accountName" type="text" autocomplete="name">
+              </div>
+              <div class="field">
+                <label for="withdrawAccountNumber">Account number</label>
+                <input id="withdrawAccountNumber" name="accountNumber" type="text" inputmode="numeric" autocomplete="off">
+              </div>
+              <div class="field">
+                <label for="withdrawIfsc">IFSC code</label>
+                <input id="withdrawIfsc" name="ifsc" type="text" autocomplete="off" placeholder="HDFC0001234">
+              </div>
+            </div>
+            <p class="form-status" id="withdrawStatus" role="status"></p>
+            <button class="btn btn-primary btn-submit" type="submit">
+              <span class="btn-label">Request withdrawal</span>
+            </button>
+          </form>
+        </section>
+
+        <section class="form-card wallet-card" aria-labelledby="withdrawalsTitle">
+          <div class="wallet-card-head">
+            <div>
+              <p class="form-kicker">History</p>
+              <h2 id="withdrawalsTitle">Withdrawal requests</h2>
+            </div>
+          </div>
+          <div class="wallet-table-wrap">
+            <table class="wallet-table">
+              <thead>
+                <tr>
+                  <th scope="col">Requested</th>
+                  <th scope="col">Method</th>
+                  <th scope="col">Amount</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Note</th>
+                </tr>
+              </thead>
+              <tbody id="withdrawalsBody">
+                <tr><td colspan="5" class="wallet-empty">No withdrawal requests yet.</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> munafaduniya. All rights reserved.</p>
+      <p><a href="account.html">Back to account</a> · <a href="index.html">Back to deals</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script type="module" src="wallet.js"></script>
+</body>
+</html>

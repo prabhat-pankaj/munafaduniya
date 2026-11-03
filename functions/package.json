@@ -1,0 +1,20 @@
+{
+  "name": "munafaduniya-functions",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore",
+    "deploy": "cd .. && npx firebase-tools deploy --only functions,firestore:rules",
+    "logs": "cd .. && npx firebase-tools functions:log",
+    "sync:reports": "node scripts/sync-reports.mjs"
+  },
+  "dependencies": {
+    "firebase-admin": "^12.7.0",
+    "firebase-functions": "^6.1.0"
+  }
+}

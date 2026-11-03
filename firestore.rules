@@ -1,0 +1,41 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+
+      allow create: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.keys().hasOnly([
+          'name', 'email', 'phone', 'photoURL', 'provider',
+          'createdAt', 'updatedAt', 'savedDeals'
+        ])
+        && !('wallet' in request.resource.data)
+        && !('earnings' in request.resource.data)
+        && !('withdrawals' in request.resource.data);
+
+      allow update: if request.auth != null && request.auth.uid == userId
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          'name', 'email', 'phone', 'photoURL', 'provider',
+          'createdAt', 'updatedAt', 'savedDeals'
+        ]);
+
+      allow delete: if false;
+    }
+
+    match /users/{userId}/earnings/{earningId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /users/{userId}/withdrawals/{withdrawalId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if false;
+    }
+
+    match /meta/{docId} {
+      allow read: if true;
+      allow write: if false;
+    }
+  }
+}

@@ -1,0 +1,167 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Create an account — munafaduniya</title>
+  <meta name="description" content="Create a munafaduniya account to save your favourite Flipkart deals.">
+  <meta name="robots" content="noindex, follow">
+  <meta name="theme-color" content="#0d0c0b" id="themeColor">
+  <script>
+    (function () {
+      var theme = "dark";
+      try {
+        var stored = localStorage.getItem("theme");
+        theme = stored || (window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark");
+      } catch (error) {
+        theme = "dark";
+      }
+      document.documentElement.dataset.theme = theme;
+      var meta = document.getElementById("themeColor");
+      if (meta) {
+        meta.setAttribute("content", theme === "light" ? "#fdf9f4" : "#0d0c0b");
+      }
+    })();
+  </script>
+  <link rel="canonical" href="https://www.munafaduniya.com/signup.html">
+  <link rel="icon" href="logo.png" type="image/png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="signup">
+  <a class="skip-link" href="#authMain">Skip to create account</a>
+
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="index.html" aria-label="munafaduniya home">
+        <img class="brand-logo" src="logo.png" alt="" width="40" height="40">
+        <span class="brand-name">munafaduniya</span>
+      </a>
+      <nav class="primary-nav" aria-label="Primary">
+        <a href="index.html#featured">Deals</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+      <div class="header-actions">
+        <span class="live-badge"><span class="live-dot" aria-hidden="true"></span>Deals live</span>
+        <div class="auth-slot" id="authSlot"><a class="auth-link" href="signin.html">Sign in</a></div>
+        <button class="theme-toggle" id="themeToggle" type="button" aria-label="Switch to light theme" title="Switch to light theme" aria-pressed="false">
+          <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="4"/>
+            <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/>
+          </svg>
+          <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/>
+          </svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main id="authMain" class="page-main container auth-main">
+    <section class="auth-head">
+      <p class="eyebrow">Join munafaduniya</p>
+      <h1>Create your <span class="highlight">account</span>.</h1>
+      <p class="lede">Save deals you like and keep your favourite picks handy.</p>
+    </section>
+
+    <div class="form-card auth-card">
+      <div class="auth-config-notice" id="authConfigNotice" hidden>
+        <strong>Firebase is not configured yet.</strong>
+        <p>Add your project keys to <code>firebase-config.js</code> to enable sign up.</p>
+      </div>
+
+      <form id="signupForm" novalidate>
+        <div class="field">
+          <label for="signupName">Full name <span aria-hidden="true">*</span></label>
+          <input id="signupName" name="name" type="text" placeholder="Your name" autocomplete="name" required>
+        </div>
+        <div class="field">
+          <label for="signupEmail">Email address <span aria-hidden="true">*</span></label>
+          <input id="signupEmail" name="email" type="email" placeholder="you@example.com" autocomplete="email" required>
+        </div>
+        <div class="field">
+          <label for="signupPhone">Phone number <span class="optional">(optional)</span></label>
+          <input id="signupPhone" name="phone" type="tel" placeholder="+91 98765 43210" autocomplete="tel">
+        </div>
+        <div class="field-row">
+          <div class="field">
+            <label for="signupPassword">Password <span aria-hidden="true">*</span></label>
+            <input id="signupPassword" name="password" type="password" placeholder="At least 6 characters" autocomplete="new-password" minlength="6" required>
+          </div>
+          <div class="field">
+            <label for="signupConfirm">Confirm password <span aria-hidden="true">*</span></label>
+            <input id="signupConfirm" name="confirm" type="password" placeholder="Repeat password" autocomplete="new-password" minlength="6" required>
+          </div>
+        </div>
+        <label class="consent">
+          <input type="checkbox" name="consent" required>
+          <span>I agree to the <a href="contact.html">terms of use</a> and to receive occasional deal updates.</span>
+        </label>
+        <button class="btn btn-primary btn-submit" type="submit">
+          <span class="btn-label">Create account</span>
+          <span class="spinner" aria-hidden="true"></span>
+        </button>
+      </form>
+
+      <div class="auth-divider"><span>or sign up with</span></div>
+
+      <button class="btn btn-ghost auth-social" id="googleSignup" type="button">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5a5.6 5.6 0 01-2.4 3.7v3h3.9c2.3-2.1 3.5-5.2 3.5-8.9z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9H1.4v3.1A12 12 0 0012 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 010-4.6V6.7H1.4a12 12 0 000 10.8l4-3.1z"/><path fill="#EA4335" d="M12 4.7c1.7 0 3.3.6 4.5 1.8l3.4-3.4A12 12 0 001.4 6.7l4 3.1C6.3 6.9 8.9 4.7 12 4.7z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="auth-phone">
+        <form id="phoneForm" class="auth-phone-form">
+          <div class="field">
+            <label for="phoneNumber">Phone number <span class="optional">(OTP)</span></label>
+            <div class="auth-phone-row">
+              <select id="phoneCountry" aria-label="Country code">
+                <option value="+91">IN +91</option>
+                <option value="+1">US +1</option>
+                <option value="+44">UK +44</option>
+                <option value="+971">UAE +971</option>
+                <option value="+61">AU +61</option>
+                <option value="+65">SG +65</option>
+              </select>
+              <input id="phoneNumber" name="phone" type="tel" inputmode="tel" placeholder="98765 43210" autocomplete="tel-national">
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-submit" type="submit">
+            <span class="btn-label">Send code</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+        </form>
+
+        <form id="otpForm" class="auth-otp" hidden>
+          <p class="auth-otp-note">Enter the 6-digit code sent to <strong id="otpPhoneLabel"></strong>.</p>
+          <div class="field">
+            <label for="otpCode">Verification code</label>
+            <input id="otpCode" name="otp" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" pattern="[0-9]{6}" placeholder="123456">
+          </div>
+          <button class="btn btn-primary btn-submit" type="submit">
+            <span class="btn-label">Verify code</span>
+            <span class="spinner" aria-hidden="true"></span>
+          </button>
+          <button class="auth-text-btn" type="button" id="changePhoneBtn">Use a different number</button>
+        </form>
+        <div id="recaptcha-container"></div>
+      </div>
+
+      <p class="auth-switch">Already have an account? <a href="signin.html">Sign in</a></p>
+      <div id="authStatus" class="form-status" role="status" aria-live="polite"></div>
+    </div>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-bottom">
+      <p>&copy; <span id="year">2026</span> munafaduniya. All rights reserved.</p>
+      <p><a href="index.html">Back to deals</a></p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script type="module" src="auth.js"></script>
+</body>
+</html>
