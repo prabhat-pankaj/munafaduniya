@@ -127,21 +127,151 @@ function renderHeaderAuth(user) {
 
   var name =
     user.displayName || (user.email ? user.email.split("@")[0] : "Account");
-  var firstName = name.trim().split(/\s+/)[0] || "Account";
-  var initial = firstName.charAt(0).toUpperCase() || "A";
+  name = String(name).trim() || "Account";
+  var initial = name.charAt(0).toUpperCase() || "A";
+  var contact = user.email || user.phoneNumber || "";
+
   slot.innerHTML =
     '<a class="header-wallet" id="headerWallet" href="wallet.html" aria-label="Open your wallet earnings">' +
     '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h13a2 2 0 002-2v-2"/><path d="M21 12h-6a2 2 0 000 4h6z"/></svg>' +
     '<strong class="header-wallet-amount" id="headerWalletAmount">₹0.00</strong></a>' +
-    '<a class="auth-user" href="account.html" aria-label="Open your account">' +
+    '<div class="auth-menu">' +
+    '<button class="auth-user" type="button" data-auth-menu-toggle aria-haspopup="menu" aria-expanded="false" aria-controls="authMenu" aria-label="Open account menu">' +
     '<span class="auth-avatar" aria-hidden="true">' +
     escapeHtml(initial) +
     "</span>" +
     '<span class="auth-name">' +
-    escapeHtml(firstName) +
-    "</span></a>";
+    escapeHtml(name) +
+    "</span>" +
+    '<svg class="auth-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>' +
+    "</button>" +
+    '<div class="auth-menu-panel" id="authMenu" role="menu" hidden>' +
+    '<div class="auth-menu-head">' +
+    '<span class="auth-menu-avatar" aria-hidden="true">' +
+    escapeHtml(initial) +
+    "</span>" +
+    '<span class="auth-menu-identity">' +
+    '<strong class="auth-menu-name">' +
+    escapeHtml(name) +
+    "</strong>" +
+    (contact
+      ? '<span class="auth-menu-email">' + escapeHtml(contact) + "</span>"
+      : "") +
+    "</span>" +
+    "</div>" +
+    '<div class="auth-menu-list">' +
+    '<a class="auth-menu-item" href="account.html" role="menuitem">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4.5 21a7.5 7.5 0 0115 0"/></svg>' +
+    "<span>My account</span></a>" +
+    '<a class="auth-menu-item" href="wallet.html" role="menuitem">' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 8V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2h13a2 2 0 002-2v-2"/><path d="M21 12h-6a2 2 0 000 4h6z"/></svg>' +
+    "<span>Wallet &amp; earnings</span></a>" +
+    '<button class="auth-menu-item auth-menu-signout" type="button" role="menuitem" data-auth-signout>' +
+    '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 17l5-5-5-5"/><path d="M15 12H3"/><path d="M14 3h5a2 2 0 012 2v14a2 2 0 01-2 2h-5"/></svg>' +
+    "<span>Sign out</span></button>" +
+    "</div>" +
+    "</div>" +
+    "</div>";
 
   loadHeaderWallet(user);
+}
+
+function closeHeaderMenus() {
+  document.querySelectorAll("[data-auth-menu-toggle]").forEach(function (button) {
+    button.setAttribute("aria-expanded", "false");
+  });
+  document.querySelectorAll(".auth-menu-panel").forEach(function (panel) {
+    panel.hidden = true;
+  });
+}
+
+function initHeaderMenu() {
+  if (document.body.dataset.authMenuReady === "true") {
+    return;
+  }
+  document.body.dataset.authMenuReady = "true";
+
+  document.addEventListener("click", function (event) {
+    var toggle = event.target.closest("[data-auth-menu-toggle]");
+    if (toggle) {
+      event.preventDefault();
+      var menu = toggle.closest(".auth-menu");
+      var panel = menu ? menu.querySelector(".auth-menu-panel") : null;
+      var willOpen = panel ? panel.hidden : false;
+      closeHeaderMenus();
+      if (willOpen && panel) {
+        panel.hidden = false;
+        toggle.setAttribute("aria-expanded", "true");
+        var firstItem = panel.querySelector('[role="menuitem"]');
+        if (firstItem) {
+          firstItem.focus({ preventScroll: true });
+        }
+      }
+      return;
+    }
+
+    if (!event.target.closest(".auth-menu")) {
+      closeHeaderMenus();
+    }
+  });
+
+  document.addEventListener("keydown", function (event) {
+    if (event.key !== "Escape") {
+      return;
+    }
+    if (!document.querySelector(".auth-menu-panel:not([hidden])")) {
+      return;
+    }
+    closeHeaderMenus();
+    var toggle = document.querySelector("[data-auth-menu-toggle]");
+    if (toggle) {
+      toggle.focus({ preventScroll: true });
+    }
+  });
+
+  document.addEventListener("click", function (event) {
+    var signout = event.target.closest("[data-auth-signout]");
+    if (!signout) {
+      return;
+    }
+    signout.disabled = true;
+    if (!fb || !fb.authModule) {
+      redirectHome();
+      return;
+    }
+    fb.authModule
+      .signOut(fb.auth)
+      .catch(function (error) {
+        console.warn("Could not sign out.", error);
+      })
+      .finally(function () {
+        redirectHome();
+      });
+  });
+}
+
+function updateHeaderIdentity(name) {
+  var label = String(name || "").trim();
+  if (!label) {
+    return;
+  }
+
+  var nameElement = document.querySelector("#authSlot .auth-name");
+  if (nameElement) {
+    nameElement.textContent = label;
+  }
+
+  var menuName = document.querySelector("#authSlot .auth-menu-name");
+  if (menuName) {
+    menuName.textContent = label;
+  }
+
+  var initial = label.charAt(0).toUpperCase() || "A";
+  document
+    .querySelectorAll("#authSlot .auth-avatar, #authSlot .auth-menu-avatar")
+    .forEach(function (avatar) {
+      avatar.textContent = initial;
+    });
 }
 
 async function loadHeaderWallet(user) {
@@ -157,8 +287,12 @@ async function loadHeaderWallet(user) {
     if (!amount) {
       return;
     }
-    var wallet = snapshot.exists() ? snapshot.data().wallet || {} : {};
+    var profile = snapshot.exists() ? snapshot.data() : {};
+    var wallet = profile.wallet || {};
     amount.textContent = formatPaise(wallet.availablePaise);
+    if (profile.name) {
+      updateHeaderIdentity(profile.name);
+    }
   } catch (error) {
     console.warn("Could not load wallet earnings.", error);
   }
@@ -629,6 +763,7 @@ function handleAuthState(user) {
 }
 
 (async function initAuth() {
+  initHeaderMenu();
   renderHeaderAuth(null);
 
   var configured = false;
