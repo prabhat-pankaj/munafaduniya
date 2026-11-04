@@ -15,8 +15,9 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 - Daily Flipkart catalog refresh from the affiliate API
 - Featured deals grid that uses the same responsive layout as the category Shop sections
 - Full-width, auto-rotating best-deals carousel with unique products from multiple categories, reshuffled on every page load
+- Live CueLinks partner offers section with campaign logos, coupon codes, and `via CueLinks` badges
 - Seven category sections with expandable product grids
-- Product cards with price, MRP, savings, discount, and CueLinks affiliate links
+- Product cards with price, MRP, savings, discount, source logos, and CueLinks affiliate links
 - Responsive dark/light theme that follows the visitor's system preference and remembers the choice
 - Contact form with validation, a spam honeypot, and AJAX submission
 - Affiliate disclosure and Flipkart trademark notice
@@ -50,11 +51,13 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 | `functions/src/index.js` | Scheduled jobs, CueLinks/Flipkart callables, webhook, withdrawal callables |
 | `functions/scripts/*.mjs` | CLI helpers for reports, admin claims, and withdrawals |
 | `styles.css` | All styling, themes, and responsive layout |
-| `script.js` | Theme, catalog rendering, carousel, tracking, and AJAX form |
+| `script.js` | Theme, catalog/offers rendering, carousel, tracking, and AJAX form |
 | `data/catalog.json` | Generated product catalog read by the site |
+| `data/cuelinks-offers.json` | Live CueLinks partner offers and campaign logos |
 | `scripts/fetch-flipkart.mjs` | Builds `data/catalog.json` from the Flipkart API |
 | `scripts/apply-cuelinks.mjs` | Converts every catalog product URL into a CueLinks tracking link |
-| `.github/workflows/update-flipkart-data.yml` | Refreshes the catalog daily and commits changes |
+| `scripts/fetch-cuelinks-offers.mjs` | Builds `data/cuelinks-offers.json` from the CueLinks offers API |
+| `.github/workflows/update-flipkart-data.yml` | Refreshes the catalog and CueLinks offers daily and commits changes |
 | `.env.example` | Local credential template |
 | `logo.png` | munafaduniya logo and favicon |
 | `CNAME` | Custom domain for GitHub Pages |

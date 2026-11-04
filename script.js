@@ -344,9 +344,19 @@
     var searchInput = document.getElementById("headerSearch");
     var bestDealsSection = document.getElementById("bestDeals");
     var featuredSection = document.getElementById("featured");
+    var cuelinksSection = document.getElementById("cuelinksDeals");
+    var cuelinksGrid = document.getElementById("cuelinksGrid");
+    var cuelinksStatus = document.getElementById("cuelinksStatus");
+    var cuelinksCount = document.getElementById("cuelinksCount");
+    var cuelinksMore = document.getElementById("cuelinksMore");
     var activeSearchQuery = "";
 
     var catalog = null;
+    var catalogAffiliate = {
+      name: "Flipkart",
+      logo: "",
+      network: "Flipkart"
+    };
     var products = [];
     var productById = Object.create(null);
     var carouselTimer = null;
@@ -445,6 +455,68 @@
       return "logo.png";
     }
 
+    function safeLogoUrl(rawUrl) {
+      try {
+        var url = new URL(rawUrl);
+        if (
+          url.protocol === "https:" &&
+          /(^|\.)cuelinks\.com$/.test(url.hostname)
+        ) {
+          return url.href;
+        }
+      } catch (error) {
+        return "";
+      }
+      return "";
+    }
+
+    function sourceBadge(affiliate) {
+      var name = (affiliate && affiliate.name) || "Flipkart";
+      var logo = affiliate && affiliate.logo
+        ? safeLogoUrl(affiliate.logo)
+        : "";
+      var logoMarkup = logo
+        ? '<img src="' +
+          escapeHtml(logo) +
+          '" alt="" width="18" height="18" loading="lazy" decoding="async">'
+        : "";
+
+      return (
+        '<span class="source-badge" title="' +
+        escapeHtml("Source: " + name) +
+        '">' +
+        logoMarkup +
+        "<span>" +
+        escapeHtml(name) +
+        "</span></span>"
+      );
+    }
+
+    function networkBadge(network) {
+      return (
+        '<span class="source-badge source-badge-network" title="' +
+        escapeHtml("Offered via " + network) +
+        '"><span>via ' +
+        escapeHtml(network) +
+        "</span></span>"
+      );
+    }
+
+    function formatShortDate(value) {
+      var text = String(value || "").trim();
+      var match = text.match(/^(\d{4})-(\d{2})-(\d{2})/);
+      if (!match) {
+        return text;
+      }
+      var date = new Date(
+        Date.UTC(Number(match[1]), Number(match[2]) - 1, Number(match[3]))
+      );
+      return date.toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short"
+      });
+    }
+
     function categoryIcon(key) {
       var paths =
         categoryIcons[key] ||
@@ -478,6 +550,8 @@
       }
 
       var image = safeImageUrl(product.image);
+      var affiliateName = catalogAffiliate.name || "Flipkart";
+      var source = sourceBadge(catalogAffiliate);
       var discount =
         product.discount > 0
           ? '<span class="discount-badge">' +
@@ -511,12 +585,13 @@
         '<a class="product-card" href="' +
         escapeHtml(withAffiliateTracking(url)) +
         '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
-        escapeHtml(product.title + " on Flipkart") +
+        escapeHtml(product.title + " on " + affiliateName) +
         '"' +
         hiddenAttr +
         ">" +
         '<div class="product-media">' +
         discount +
+        source +
         '<img src="' +
         escapeHtml(image) +
         '" alt="' +
@@ -538,7 +613,9 @@
         mrp +
         savingLabel +
         "</div>" +
-        '<span class="product-cta"><span>View on Flipkart</span>' +
+        '<span class="product-cta"><span>View on ' +
+        escapeHtml(affiliateName) +
+        "</span>" +
         '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>' +
         "</span>" +
         "</div>" +
@@ -638,7 +715,9 @@
       }
 
       var image = safeImageUrl(product.image);
-      var category = product.categoryLabel || "Flipkart deal";
+      var affiliateName = catalogAffiliate.name || "Flipkart";
+      var source = sourceBadge(catalogAffiliate);
+      var category = product.categoryLabel || affiliateName + " deal";
       var brand = product.brand || category;
       var discount =
         product.discount > 0
@@ -665,12 +744,14 @@
         '<a class="best-deal-card" href="' +
         escapeHtml(withAffiliateTracking(url)) +
         '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
-        escapeHtml(product.title + " on Flipkart") +
+        escapeHtml(product.title + " on " + affiliateName) +
         '" style="--deal-delay:' +
         Math.min(index, 8) * 55 +
         'ms">' +
         discount +
-        '<div class="best-deal-media"><img src="' +
+        '<div class="best-deal-media">' +
+        source +
+        '<img src="' +
         escapeHtml(image) +
         '" alt="' +
         escapeHtml(product.title) +
@@ -693,6 +774,167 @@
         "</div>" +
         "</a>"
       );
+    }
+
+    function offerCard(offer, options) {
+      options = options || {};
+      var url = safeProductUrl(offer.trackingUrl);
+      if (!url) {
+        return "";
+      }
+      var hiddenAttr = options.hidden ? " hidden" : "";
+      var extraAttr = options.hidden ? ' data-extra="true"' : "";
+
+      var logo = safeLogoUrl(offer.campaignLogo);
+      var initials = String(offer.campaignName || "CueLinks")
+        .split(/\s+/)
+        .filter(Boolean)
+        .slice(0, 2)
+        .map(function (part) {
+          return part.charAt(0).toUpperCase();
+        })
+        .join("");
+      var logoMarkup = logo
+        ? '<img class="offer-logo" src="' +
+          escapeHtml(logo) +
+          '" alt="' +
+          escapeHtml(offer.campaignName + " logo") +
+          '" width="120" height="120" loading="lazy" decoding="async">'
+        : '<span class="offer-logo offer-logo-fallback" aria-hidden="true">' +
+          escapeHtml(initials || "CL") +
+          "</span>";
+      var typeLabel = offer.offerType === "coupon" ? "Coupon" : "Deal";
+      var chips = ['<span class="offer-chip">' + typeLabel + "</span>"];
+      if (offer.percentOff > 0) {
+        chips.push(
+          '<span class="offer-chip offer-chip-accent">' +
+            Math.round(offer.percentOff) +
+            "% off</span>"
+        );
+      }
+      if (offer.couponCode) {
+        chips.push(
+          '<span class="offer-chip offer-code">Code: ' +
+            escapeHtml(offer.couponCode) +
+            "</span>"
+        );
+      }
+      var price =
+        offer.discountPrice > 0
+          ? '<div class="product-price-row"><span class="product-price">' +
+            formatPrice(offer.discountPrice) +
+            "</span>" +
+            (offer.originalPrice > offer.discountPrice
+              ? '<span class="product-mrp">' +
+                formatPrice(offer.originalPrice) +
+                "</span>"
+              : "") +
+            "</div>"
+          : "";
+      var validity = offer.endDate
+        ? '<span class="offer-validity">Valid till ' +
+          escapeHtml(formatShortDate(offer.endDate)) +
+          "</span>"
+        : "";
+
+      return (
+        '<a class="product-card offer-card" href="' +
+        escapeHtml(withAffiliateTracking(url)) +
+        '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
+        escapeHtml(offer.title + " on " + offer.campaignName) +
+        '"' +
+        hiddenAttr +
+        extraAttr +
+        ">" +
+        '<div class="product-media offer-media">' +
+        networkBadge("CueLinks") +
+        logoMarkup +
+        "</div>" +
+        '<div class="product-body">' +
+        '<p class="product-brand">' +
+        escapeHtml(offer.campaignName) +
+        "</p>" +
+        '<h3 class="product-title">' +
+        escapeHtml(offer.title) +
+        "</h3>" +
+        (offer.description
+          ? '<p class="offer-description">' +
+            escapeHtml(offer.description) +
+            "</p>"
+          : "") +
+        '<div class="offer-meta">' +
+        chips.join("") +
+        "</div>" +
+        price +
+        validity +
+        '<span class="product-cta"><span>View offer</span>' +
+        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>' +
+        "</span>" +
+        "</div>" +
+        "</a>"
+      );
+    }
+
+    function renderCuelinksOffers(payload) {
+      if (!cuelinksSection || !cuelinksGrid) {
+        return;
+      }
+
+      var offers = payload && Array.isArray(payload.offers)
+        ? payload.offers.filter(function (offer) {
+            return offer && safeProductUrl(offer.trackingUrl);
+          })
+        : [];
+
+      if (!offers.length) {
+        cuelinksSection.hidden = true;
+        return;
+      }
+
+      cuelinksGrid.innerHTML = offers
+        .map(function (offer, index) {
+          return offerCard(offer, { hidden: index >= 12 });
+        })
+        .filter(Boolean)
+        .join("");
+
+      cuelinksSection.hidden = false;
+      cuelinksSection.dataset.loaded = "true";
+
+      if (cuelinksCount) {
+        cuelinksCount.textContent =
+          offers.length + (offers.length === 1 ? " offer" : " offers");
+      }
+      if (cuelinksStatus) {
+        cuelinksStatus.hidden = true;
+      }
+      if (cuelinksMore) {
+        cuelinksMore.hidden = offers.length <= 12;
+        cuelinksMore.setAttribute("data-expanded", "false");
+        cuelinksMore.setAttribute("data-total", String(offers.length));
+        cuelinksMore.textContent = "Show all " + offers.length + " offers";
+      }
+
+      attachImageFallbacks(cuelinksGrid);
+      observeReveals(cuelinksGrid);
+    }
+
+    function loadCuelinksOffers() {
+      if (!cuelinksSection || !cuelinksGrid) {
+        return;
+      }
+
+      fetch("data/cuelinks-offers.json", { cache: "no-store" })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          return response.json();
+        })
+        .then(renderCuelinksOffers)
+        .catch(function () {
+          cuelinksSection.hidden = true;
+        });
     }
 
     function searchProducts(query) {
@@ -739,6 +981,13 @@
       }
       if (featuredSection) {
         featuredSection.hidden = isActive;
+      }
+      if (cuelinksSection) {
+        if (isActive) {
+          cuelinksSection.hidden = true;
+        } else if (cuelinksSection.dataset.loaded === "true") {
+          cuelinksSection.hidden = false;
+        }
       }
       if (categorySections) {
         categorySections.hidden = isActive;
@@ -1128,6 +1377,25 @@
       };
     }
 
+    if (cuelinksMore && cuelinksGrid) {
+      cuelinksMore.addEventListener("click", function () {
+        var extraCards = cuelinksGrid.querySelectorAll(
+          '.offer-card[data-extra="true"]'
+        );
+        var isExpanded = cuelinksMore.getAttribute("data-expanded") === "true";
+        var total = cuelinksMore.getAttribute("data-total") || "";
+
+        extraCards.forEach(function (card) {
+          card.hidden = !isExpanded ? false : true;
+        });
+
+        cuelinksMore.setAttribute("data-expanded", isExpanded ? "false" : "true");
+        cuelinksMore.textContent = isExpanded
+          ? "Show all " + total + " offers"
+          : "Show fewer offers";
+      });
+    }
+
     if (categorySections) {
       categorySections.addEventListener("click", function (event) {
         var button = event.target.closest("[data-show-more]");
@@ -1228,6 +1496,8 @@
       }, 150)
     );
 
+    loadCuelinksOffers();
+
     fetch("data/catalog.json", { cache: "no-store" })
       .then(function (response) {
         if (!response.ok) {
@@ -1241,6 +1511,9 @@
         }
 
         catalog = data;
+        if (data.affiliate && data.affiliate.name) {
+          catalogAffiliate = data.affiliate;
+        }
         products = data.products.filter(function (product) {
           return product && product.id;
         });

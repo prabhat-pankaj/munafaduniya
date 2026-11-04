@@ -36,14 +36,19 @@ jobs:
           CUELINKS_CHANNEL_ID: ${{ secrets.CUELINKS_CHANNEL_ID }}
         run: node scripts/apply-cuelinks.mjs
 
-      - name: Commit updated catalog
+      - name: Fetch CueLinks partner offers
+        env:
+          CUELINKS_API_KEY: ${{ secrets.CUELINKS_API_KEY }}
+        run: node scripts/fetch-cuelinks-offers.mjs
+
+      - name: Commit updated catalog and offers
         run: |
-          if git diff --quiet -- data/catalog.json; then
-            echo "No catalog changes to commit."
+          if [ -z "$(git status --porcelain -- data/catalog.json data/cuelinks-offers.json)" ]; then
+            echo "No catalog or offer changes to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/catalog.json
-          git commit -m "chore: refresh Flipkart catalog"
+          git add data/catalog.json data/cuelinks-offers.json
+          git commit -m "chore: refresh Flipkart catalog and CueLinks offers"
           git push

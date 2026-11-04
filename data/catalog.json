@@ -5237,5 +5237,12 @@
       }
     }
   ],
-  "cuelinksUpdatedAt": "2026-11-04T14:24:27.968Z"
+  "cuelinksUpdatedAt": "2026-11-04T14:24:27.968Z",
+  "affiliate": {
+    "name": "Flipkart",
+    "logo": "https://cdn0.cuelinks.com/campaigns/1/medium/image_%287%29.png?1790611339",
+    "domain": "flipkart.com",
+    "network": "CueLinks",
+    "campaignId": 1
+  }
 }

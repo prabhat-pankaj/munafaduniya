@@ -75,6 +75,33 @@ function merchantUrl(rawUrl) {
   }
 }
 
+async function fetchCampaign(id) {
+  const response = await fetch(`${API_BASE}/campaigns/${id}`, {
+    headers: {
+      Accept: "application/json",
+      Authorization: `Token ${apiKey}`,
+      "User-Agent": "munafaduniya-cuelinks-catalog/1.0",
+    },
+    signal: AbortSignal.timeout(30000),
+  });
+
+  const text = await response.text();
+  let data = null;
+  try {
+    data = text ? JSON.parse(text) : null;
+  } catch (error) {
+    data = null;
+  }
+
+  if (!response.ok || !data || !data.data) {
+    const message =
+      (data && (data.error || data.message)) || `HTTP ${response.status}`;
+    throw new Error(message);
+  }
+
+  return data.data;
+}
+
 async function convert(url) {
   const payload = {
     url,
@@ -196,6 +223,19 @@ async function main() {
       worker()
     )
   );
+
+  try {
+    const campaign = await fetchCampaign(1);
+    catalog.affiliate = {
+      name: campaign.name || "Flipkart",
+      logo: campaign.image || "",
+      domain: campaign.domain || "flipkart.com",
+      network: "CueLinks",
+      campaignId: campaign.id || 1,
+    };
+  } catch (error) {
+    console.warn(`Could not load Flipkart campaign metadata: ${error.message}`);
+  }
 
   if (converted > 0) {
     catalog.cuelinksUpdatedAt = new Date().toISOString();
