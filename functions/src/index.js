@@ -1,11 +1,18 @@
 import { initializeApp } from "firebase-admin/app";
 import { getFirestore, FieldValue } from "firebase-admin/firestore";
-import { onCall, HttpsError } from "firebase-functions/v2/https";
+import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
 import { flipkart } from "./flipkart.js";
 import { syncReports, recomputeWallet, isFirebaseUid } from "./wallet.js";
+import { cuelinks } from "./cuelinks.js";
+import {
+  syncCuelinksReports as runCuelinksReports,
+  syncCuelinksCache as runCuelinksCache,
+  recordCuelinksTransactionEvent,
+  recordCuelinksCampaignEvent,
+} from "./cuelinks-wallet.js";
 
 initializeApp();
 
@@ -15,6 +22,8 @@ const MIN_WITHDRAWAL_PAISE = 10000;
 const flipkartId = defineSecret("FLIPKART_AFFILIATE_ID");
 const flipkartToken = defineSecret("FLIPKART_AFFILIATE_TOKEN");
 const flipkartSecrets = [flipkartId, flipkartToken];
+const cuelinksKey = defineSecret("CUELINKS_API_KEY");
+const cuelinksSecrets = [cuelinksKey];
 
 function assertAdmin(request) {
   const uid = request.auth && request.auth.uid;
@@ -129,6 +138,270 @@ export const syncFlipkartOffers = onSchedule(
       offers: allOffers.length,
       dotd: dotd.length,
     });
+  }
+);
+
+export const syncCuelinksReports = onSchedule(
+  {
+    schedule: "every 6 hours",
+    timeZone: "Asia/Kolkata",
+    region: REGION,
+    secrets: cuelinksSecrets,
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async () => {
+    const result = await runCuelinksReports();
+    logger.info("Cuelinks reports synced.", result);
+  }
+);
+
+export const syncCuelinksCache = onSchedule(
+  {
+    schedule: "every 12 hours",
+    timeZone: "Asia/Kolkata",
+    region: REGION,
+    secrets: cuelinksSecrets,
+    timeoutSeconds: 540,
+    memory: "512MiB",
+  },
+  async () => {
+    const result = await runCuelinksCache();
+    logger.info("Cuelinks cache synced.", result);
+  }
+);
+
+export const cuelinksConvert = onCall(
+  {
+    region: REGION,
+    secrets: cuelinksSecrets,
+    timeoutSeconds: 60,
+    memory: "256MiB",
+  },
+  async (request) => {
+    const data = request.data || {};
+    const url = cleanText(data.url, 2048);
+
+    if (!/^https?:\/\//i.test(url)) {
+      throw new HttpsError(
+        "invalid-argument",
+        "A full http(s) URL is required."
+      );
+    }
+
+    if (!request.auth || !request.auth.uid) {
+      throw new HttpsError(
+        "unauthenticated",
+        "Sign in to convert links with tracking."
+      );
+    }
+
+    const uid = request.auth.uid;
+    const payload = {
+      url,
+      subid: uid,
+      subid2: cleanText(data.subid2, 128) || "web",
+    };
+
+    const subid3 = cleanText(data.subid3, 128);
+    const subid4 = cleanText(data.subid4, 128);
+    const subid5 = cleanText(data.subid5, 128);
+    if (subid3) payload.subid3 = subid3;
+    if (subid4) payload.subid4 = subid4;
+    if (subid5) payload.subid5 = subid5;
+
+    if (data.channelId !== undefined && data.channelId !== null) {
+      payload.channel_id = Number(data.channelId);
+    }
+    if (data.shorten === true) {
+      payload.shorten = true;
+    }
+    if (data.referralUrl) {
+      payload.referral_url = cleanText(data.referralUrl, 2048);
+    }
+
+    let result;
+    if (data.monetize === true) {
+      const title = cleanText(data.title, 500);
+      if (!title) {
+        throw new HttpsError(
+          "invalid-argument",
+          "A title is required for monetize."
+        );
+      }
+      result = await cuelinks.monetizeLink({
+        ...payload,
+        title,
+        description: cleanText(data.description, 2000),
+        rewrite_using_ai: data.rewriteUsingAi === true,
+      });
+    } else {
+      result = await cuelinks.convertLink(payload);
+    }
+
+    return result && result.data ? result.data : result;
+  }
+);
+
+export const cuelinksApi = onCall(
+  {
+    region: REGION,
+    secrets: cuelinksSecrets,
+    timeoutSeconds: 300,
+    memory: "512MiB",
+  },
+  async (request) => {
+    assertAdmin(request);
+
+    const data = request.data || {};
+    const action = cleanText(data.action, 80);
+    const params = data.params || {};
+    const body = data.body || {};
+    const id = data.id;
+
+    const handlers = {
+      ping: () => cuelinks.ping(),
+      convertLink: () => cuelinks.convertLink(body),
+      monetizeLink: () => cuelinks.monetizeLink(body),
+      listCampaigns: () => cuelinks.listCampaigns(params),
+      getAllCampaigns: () => cuelinks.getAllCampaigns(params),
+      getCampaign: () => cuelinks.getCampaign(id, params),
+      requestCampaignAccess: () =>
+        cuelinks.requestCampaignAccess(id, body),
+      listCountries: () => cuelinks.listCountries(params),
+      listCategories: () => cuelinks.listCategories(params),
+      listChannels: () => cuelinks.listChannels(params),
+      getAllChannels: () => cuelinks.getAllChannels(params),
+      getChannel: () => cuelinks.getChannel(id),
+      createChannel: () => cuelinks.createChannel(body),
+      updateChannel: () => cuelinks.updateChannel(id, body),
+      deleteChannel: () => cuelinks.deleteChannel(id),
+      setDefaultChannel: () => cuelinks.setDefaultChannel(id),
+      listOffers: () => cuelinks.listOffers(params),
+      getAllOffers: () => cuelinks.getAllOffers(params),
+      getOffer: () => cuelinks.getOffer(id, params),
+      listTransactions: () => cuelinks.listTransactions(params),
+      getAllTransactions: () => cuelinks.getAllTransactions(params),
+      getTransaction: () => cuelinks.getTransaction(id),
+      listCpcClicks: () => cuelinks.listCpcClicks(params),
+      getAllCpcClicks: () => cuelinks.getAllCpcClicks(params),
+      performanceReport: () => cuelinks.performanceReport(params),
+      campaignsReport: () => cuelinks.campaignsReport(params),
+      earningsReport: () => cuelinks.earningsReport(params),
+      unmonetizedTrafficReport: () =>
+        cuelinks.unmonetizedTrafficReport(params),
+      listMissingTransactions: () =>
+        cuelinks.listMissingTransactions(params),
+      getAllMissingTransactions: () =>
+        cuelinks.getAllMissingTransactions(params),
+      getMissingTransaction: () => cuelinks.getMissingTransaction(id),
+      createMissingTransaction: () =>
+        cuelinks.createMissingTransaction(body),
+      updateMissingTransaction: () =>
+        cuelinks.updateMissingTransaction(id, body),
+      deleteMissingTransaction: () =>
+        cuelinks.deleteMissingTransaction(id),
+      listInvoices: () => cuelinks.listInvoices(params),
+      getAllInvoices: () => cuelinks.getAllInvoices(params),
+      getInvoice: () => cuelinks.getInvoice(id),
+      getInvoiceTransactions: () =>
+        cuelinks.getInvoiceTransactions(id, params),
+      syncReports: () => runCuelinksReports(),
+      syncCache: () => runCuelinksCache(),
+    };
+
+    const handler = handlers[action];
+    if (!handler) {
+      throw new HttpsError(
+        "invalid-argument",
+        `Unknown action "${action}". Available actions: ${Object.keys(
+          handlers
+        ).join(", ")}.`
+      );
+    }
+
+    return {
+      action,
+      data: await handler(),
+    };
+  }
+);
+
+export const cuelinksWebhook = onRequest(
+  {
+    region: REGION,
+    timeoutSeconds: 30,
+    memory: "256MiB",
+  },
+  async (request, response) => {
+    let body = request.body;
+    if (typeof body === "string") {
+      try {
+        body = JSON.parse(body);
+      } catch (error) {
+        body = Object.fromEntries(new URLSearchParams(body));
+      }
+    }
+    if (!body || typeof body !== "object") {
+      body = {};
+    }
+
+    const configuredSecret = String(
+      process.env.CUELINKS_WEBHOOK_SECRET || ""
+    ).trim();
+    const providedSecret = String(
+      request.query.secret ||
+        body.secret ||
+        request.get("x-cuelinks-secret") ||
+        ""
+    ).trim();
+
+    if (!configuredSecret) {
+      logger.error("CUELINKS_WEBHOOK_SECRET is not configured.");
+      response.status(503).json({ error: "Webhook secret not configured" });
+      return;
+    }
+
+    if (providedSecret !== configuredSecret) {
+      response.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+
+    const event = {
+      ...(request.query || {}),
+      ...body,
+    };
+
+    try {
+      const isTransaction =
+        event.transaction_id ||
+        event.txn_id ||
+        event.user_commission ||
+        event.commission;
+
+      if (isTransaction) {
+        const result = await recordCuelinksTransactionEvent(event);
+        response.status(200).json({ ok: true, ...result });
+        return;
+      }
+
+      if (
+        event.campaign_id ||
+        event.update_type ||
+        event.event === "live" ||
+        event.event === "paused" ||
+        event.event === "new_campaign"
+      ) {
+        await recordCuelinksCampaignEvent(event);
+        response.status(200).json({ ok: true, stored: true });
+        return;
+      }
+
+      response.status(200).json({ ok: true, ignored: true });
+    } catch (error) {
+      logger.error("Cuelinks webhook failed.", error);
+      response.status(500).json({ error: "Webhook processing failed" });
+    }
   }
 );
 

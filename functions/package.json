@@ -11,7 +11,9 @@
     "serve": "cd .. && npx firebase-tools emulators:start --only functions,firestore",
     "deploy": "cd .. && npx firebase-tools deploy --only functions,firestore:rules",
     "logs": "cd .. && npx firebase-tools functions:log",
-    "sync:reports": "node scripts/sync-reports.mjs"
+    "sync:reports": "node scripts/sync-reports.mjs",
+    "sync:cuelinks": "node scripts/sync-cuelinks.mjs",
+    "cuelinks:api": "node scripts/cuelinks-api.mjs"
   },
   "dependencies": {
     "firebase-admin": "^12.7.0",

@@ -122,9 +122,24 @@
     );
   }
 
+  function isCuelinksUrl(url) {
+    return (
+      url.protocol === "https:" &&
+      (/(^|\.)linksredirect\.com$/.test(url.hostname) ||
+        /(^|\.)clnk\.in$/.test(url.hostname) ||
+        /(^|\.)cuelinks\.com$/.test(url.hostname))
+    );
+  }
+
   function withAffiliateTracking(rawUrl) {
     try {
       var url = new URL(rawUrl);
+
+      if (isCuelinksUrl(url)) {
+        url.searchParams.set("subid", affiliateUid || "site");
+        return url.href;
+      }
+
       if (!isFlipkartUrl(url)) {
         return rawUrl;
       }
@@ -142,7 +157,9 @@
 
   function applyAffiliateTracking(scope) {
     (scope || document)
-      .querySelectorAll('a[href*="flipkart.com"]')
+      .querySelectorAll(
+        'a[href*="flipkart.com"], a[href*="linksredirect.com"], a[href*="clnk.in"], a[href*="cuelinks.com"]'
+      )
       .forEach(function (link) {
         link.href = withAffiliateTracking(link.href);
       });
@@ -387,7 +404,10 @@
         var url = new URL(rawUrl);
         if (
           url.protocol === "https:" &&
-          /(^|\.)flipkart\.com$/.test(url.hostname)
+          (/(^|\.)flipkart\.com$/.test(url.hostname) ||
+            /(^|\.)linksredirect\.com$/.test(url.hostname) ||
+            /(^|\.)clnk\.in$/.test(url.hostname) ||
+            /(^|\.)cuelinks\.com$/.test(url.hostname))
         ) {
           return url.href;
         }
@@ -395,6 +415,17 @@
         return null;
       }
       return null;
+    }
+
+    function productTargetUrl(product) {
+      var tracked = product && product.trackingUrl
+        ? safeProductUrl(product.trackingUrl)
+        : null;
+      var cuelinks = product && product.cuelinks;
+      if (tracked && (!cuelinks || cuelinks.affiliated !== false)) {
+        return tracked;
+      }
+      return safeProductUrl(product && product.url);
     }
 
     function safeImageUrl(rawUrl) {
@@ -441,7 +472,7 @@
     function productCard(product, options) {
       options = options || {};
 
-      var url = safeProductUrl(product.url);
+      var url = productTargetUrl(product);
       if (!url) {
         return "";
       }
@@ -601,7 +632,7 @@
     }
 
     function bestDealCard(product, index) {
-      var url = safeProductUrl(product.url);
+      var url = productTargetUrl(product);
       if (!url) {
         return "";
       }
@@ -676,7 +707,7 @@
 
       return products
         .filter(function (product) {
-          if (!product || !safeProductUrl(product.url)) {
+          if (!product || !productTargetUrl(product)) {
             return false;
           }
           var haystack = [
@@ -878,7 +909,7 @@
       stopSpotlight();
 
       var carouselProducts = spotlightProducts.filter(function (product) {
-        return product && safeProductUrl(product.url);
+        return product && productTargetUrl(product);
       });
 
       if (!carouselProducts.length) {
@@ -921,8 +952,6 @@
       if (catalogStatus) {
         catalogStatus.hidden = true;
       }
-      updateCarouselControls();
-      startCarousel();
     }
 
     function renderCategories() {

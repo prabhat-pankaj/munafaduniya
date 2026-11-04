@@ -30,6 +30,12 @@ jobs:
           FLIPKART_AFFILIATE_TOKEN: ${{ secrets.FLIPKART_AFFILIATE_TOKEN }}
         run: node scripts/fetch-flipkart.mjs
 
+      - name: Convert product links with CueLinks
+        env:
+          CUELINKS_API_KEY: ${{ secrets.CUELINKS_API_KEY }}
+          CUELINKS_CHANNEL_ID: ${{ secrets.CUELINKS_CHANNEL_ID }}
+        run: node scripts/apply-cuelinks.mjs
+
       - name: Commit updated catalog
         run: |
           if git diff --quiet -- data/catalog.json; then

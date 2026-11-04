@@ -403,8 +403,30 @@ export async function recomputeWallet(uid) {
     let lifetimeEarnedPaise = 0;
     let availableEarnedPaise = 0;
 
+    const earningDocs = [];
+    const cuelinksOrderIds = new Set();
+
     earningsSnapshot.forEach((snapshot) => {
       const data = snapshot.data();
+      earningDocs.push(data);
+      if (
+        String(data.source || "").startsWith("cuelinks-") &&
+        data.orderId &&
+        normalizeStatus(data.status) !== "cancelled"
+      ) {
+        cuelinksOrderIds.add(String(data.orderId));
+      }
+    });
+
+    earningDocs.forEach((data) => {
+      if (
+        String(data.source || "").startsWith("flipkart-") &&
+        data.orderId &&
+        cuelinksOrderIds.has(String(data.orderId))
+      ) {
+        return;
+      }
+
       const share = Math.max(0, Number(data.userSharePaise) || 0);
       const status = normalizeStatus(data.status);
       const creditAt = toMillis(data.expectedCreditAt);
