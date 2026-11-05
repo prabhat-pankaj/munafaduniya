@@ -1,4 +1,4 @@
-name: Update Flipkart catalog
+name: Update CueLinks data
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: flipkart-catalog
+  group: cuelinks-data
   cancel-in-progress: true
 
 jobs:
@@ -24,13 +24,7 @@ jobs:
         with:
           node-version: 20
 
-      - name: Build catalog from Flipkart API
-        env:
-          FLIPKART_AFFILIATE_ID: ${{ secrets.FLIPKART_AFFILIATE_ID }}
-          FLIPKART_AFFILIATE_TOKEN: ${{ secrets.FLIPKART_AFFILIATE_TOKEN }}
-        run: node scripts/fetch-flipkart.mjs
-
-      - name: Convert product links with CueLinks
+      - name: Convert catalog product links with CueLinks
         env:
           CUELINKS_API_KEY: ${{ secrets.CUELINKS_API_KEY }}
           CUELINKS_CHANNEL_ID: ${{ secrets.CUELINKS_CHANNEL_ID }}
@@ -50,5 +44,5 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add data/catalog.json data/cuelinks-offers.json
-          git commit -m "chore: refresh Flipkart catalog and CueLinks offers"
+          git commit -m "chore: refresh CueLinks catalog and offers"
           git push

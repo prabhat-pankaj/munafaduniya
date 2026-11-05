@@ -2,17 +2,17 @@
 
 A static deals site for `munafaduniya.com`. It shows fresh Flipkart product deals across mobiles, electronics, fashion, home, beauty, sports, and appliances, with a full-width best-deals carousel, a featured deals grid, and category sections. Product links are monetized through the **CueLinks V3 API**, and signed-in orders are attributed back to the user's wallet.
 
-The site is plain HTML, CSS, and JavaScript. There is no build step for the pages. Product data is fetched from the **Flipkart Affiliate API** by a scheduled GitHub Action and written to `data/catalog.json`. The browser reads that JSON file. The affiliate token is never sent to the browser.
+The site is plain HTML, CSS, and JavaScript. There is no build step for the pages. Product data lives in `data/catalog.json`, and the browser reads that JSON file. CueLinks partner offers are refreshed by a scheduled GitHub Action.
 
 User accounts use **Firebase Authentication** and **Firestore**. GitHub Pages still serves the static files; it never stores user data. Passwords are hashed by Firebase and are never written to this repository.
 
-A **Firebase Functions** backend (project `munafaduniya-68695`, region `asia-south1`) syncs Flipkart order/app-install reports and CueLinks transactions/CPC clicks, calculates each signed-in user's share, and handles manual withdrawal requests. Affiliate tokens and the CueLinks API key are stored as Functions secrets, never in the browser.
+A **Firebase Functions** backend (project `munafaduniya-68695`, region `asia-south1`) syncs CueLinks transactions/CPC clicks, calculates each signed-in user's share, and handles manual withdrawal requests. The CueLinks API key is stored as a Functions secret, never in the browser.
 
 The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit](https://formsubmit.co).
 
 ## Features
 
-- Daily Flipkart catalog refresh from the affiliate API
+- Product catalog served from `data/catalog.json`
 - Featured deals grid that uses the same responsive layout as the category Shop sections
 - Full-width, auto-rotating best-deals carousel with unique products from multiple categories, reshuffled on every page load
 - Live CueLinks partner offers section with campaign logos, coupon codes, and `via CueLinks` badges
@@ -24,7 +24,7 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 - Account pages with email/password, Google, and phone OTP sign-in via Firebase
 - Wallet page with available/pending/lifetime earnings and withdrawal history
 - Signed-in CueLinks links carry the Firebase UID in `subid` so orders can be attributed
-- Scheduled Functions sync Flipkart reports and CueLinks transactions every 6 hours
+- Scheduled Functions sync CueLinks transactions every 6 hours
 - Every documented CueLinks V3 endpoint is available through the admin `cuelinksApi` callable, plus an authenticated `cuelinksConvert` callable and a postback webhook
 - No product data hardcoded in the HTML
 
@@ -44,31 +44,29 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 | `firebase-config.js` | Public Firebase web config (project `munafaduniya-68695`) |
 | `firebase.json` | Firebase Functions and Firestore deploy config |
 | `firestore.rules` | Security rules for profiles, earnings, withdrawals, and offers |
-| `functions/src/flipkart.js` | Server-side Flipkart Affiliate API client |
 | `functions/src/cuelinks.js` | Server-side CueLinks V3 API client (all 33 endpoints) |
 | `functions/src/cuelinks-wallet.js` | CueLinks transaction/CPC sync, cache, and postback handling |
-| `functions/src/wallet.js` | Report sync, commission share, and wallet recomputation |
-| `functions/src/index.js` | Scheduled jobs, CueLinks/Flipkart callables, webhook, withdrawal callables |
-| `functions/scripts/*.mjs` | CLI helpers for reports, admin claims, and withdrawals |
+| `functions/src/wallet.js` | Commission share and wallet recomputation |
+| `functions/src/index.js` | Scheduled jobs, CueLinks callables, webhook, withdrawal callables |
+| `functions/scripts/*.mjs` | CLI helpers for CueLinks, admin claims, and withdrawals |
 | `styles.css` | All styling, themes, and responsive layout |
 | `script.js` | Theme, catalog/offers rendering, carousel, tracking, and AJAX form |
 | `data/catalog.json` | Generated product catalog read by the site |
 | `data/cuelinks-offers.json` | Live CueLinks partner offers and campaign logos |
-| `scripts/fetch-flipkart.mjs` | Builds `data/catalog.json` from the Flipkart API |
 | `scripts/apply-cuelinks.mjs` | Converts every catalog product URL into a CueLinks tracking link |
 | `scripts/fetch-cuelinks-offers.mjs` | Builds `data/cuelinks-offers.json` from the CueLinks offers API |
-| `.github/workflows/update-flipkart-data.yml` | Refreshes the catalog and CueLinks offers daily and commits changes |
+| `.github/workflows/update-cuelinks-data.yml` | Refreshes CueLinks links and offers daily and commits changes |
 | `.env.example` | Local credential template |
 | `logo.png` | munafaduniya logo and favicon |
 | `CNAME` | Custom domain for GitHub Pages |
 
 ## How the product data works
 
-`scripts/fetch-flipkart.mjs` calls Flipkart's affiliate search endpoint for a curated set of category queries. It normalises the response, keeps in-stock products with valid Flipkart URLs and images, adds the affiliate ID to every product URL, and writes the result to `data/catalog.json`.
+The product catalog is stored in `data/catalog.json`. `scripts/apply-cuelinks.mjs` converts every catalog product URL into a CueLinks tracking link, and `scripts/fetch-cuelinks-offers.mjs` builds `data/cuelinks-offers.json` from the CueLinks offers API. Both run on a schedule.
 
-Only the category names and search queries are configured in the script. Products, prices, images, discounts, and links all come from the API response. The browser never calls the Flipkart API directly because that would expose the affiliate token. On each page load, the best-deals carousel selects top deals from the generated catalog and reshuffles them, so the visible set changes on refresh without needing another API call.
+On each page load, the best-deals carousel selects top deals from the catalog and reshuffles them, so the visible set changes on refresh.
 
-The generated catalog contains:
+The catalog contains:
 
 - `generatedAt` — timestamp of the build
 - `categories` — category keys, labels, and counts
@@ -84,19 +82,17 @@ The generated catalog contains:
    cp .env.example .env
    ```
 
-2. Add your Flipkart affiliate credentials and CueLinks key to `.env`:
+2. Add your CueLinks key to `.env`:
 
    ```dotenv
-   FLIPKART_AFFILIATE_ID=your-affiliate-id
-   FLIPKART_AFFILIATE_TOKEN=your-affiliate-token
    CUELINKS_API_KEY=your-cuelinks-api-key
    ```
 
-3. Build the catalog and convert its links through CueLinks:
+3. Convert the catalog links through CueLinks and fetch partner offers:
 
    ```bash
-   node scripts/fetch-flipkart.mjs
    node scripts/apply-cuelinks.mjs
+   node scripts/fetch-cuelinks-offers.mjs
    ```
 
 4. Serve the site:
@@ -113,12 +109,10 @@ The site needs to be served over HTTP rather than opened as a local file, becaus
 
 Add these repository secrets under **Settings → Secrets and variables → Actions**:
 
-- `FLIPKART_AFFILIATE_ID`
-- `FLIPKART_AFFILIATE_TOKEN`
 - `CUELINKS_API_KEY`
 - `CUELINKS_CHANNEL_ID` (optional)
 
-The workflow runs daily at `02:17 UTC` and can also be started manually from the Actions tab. It has `contents: write` permission and commits `data/catalog.json` only when the catalog changes. If you protect the `main` branch, allow the workflow to push or adjust the workflow to open a pull request instead.
+The workflow runs daily at `02:17 UTC` and can also be started manually from the Actions tab. It has `contents: write` permission and commits `data/catalog.json` and `data/cuelinks-offers.json` only when they change. If you protect the `main` branch, allow the workflow to push or adjust the workflow to open a pull request instead.
 
 ## FormSubmit activation
 
@@ -144,16 +138,9 @@ The current recipient is `munafaduniya@gmail.com`. To send a copy to another add
 <input type="hidden" name="_cc" value="second@example.com">
 ```
 
-## Change categories or searches
+## Change categories
 
-Edit the `CATEGORIES` array in `scripts/fetch-flipkart.mjs`. Each category has:
-
-- `key` — used in `data-category` attributes and section IDs
-- `label` — displayed on the site
-- `queries` — search phrases sent to the Flipkart API
-- `pathIncludes` — optional category-path filters used to keep results relevant
-
-After changing categories, update the category chips and footer links in `index.html` and `contact.html` if the visible category list changes. Then rebuild the catalog.
+Category keys and labels are stored in `data/catalog.json`. If the visible category list changes, update the category chips and footer links in `index.html` and `contact.html` to match.
 
 ## User accounts (Firebase)
 
@@ -193,23 +180,23 @@ Earnings and withdrawals are admin-written subcollections:
 
 Signed-in users can read only their own profile, earnings, and withdrawals. They cannot write earnings, withdrawals, or wallet balances; the Admin SDK and callables own those fields. Passwords are never stored in Firestore or in this repository.
 
-CueLinks earnings are stored in the same `users/{uid}/earnings` subcollection with `source: "cuelinks-transactions"` or `source: "cuelinks-cpc-clicks"`. When a CueLinks order matches a Flipkart order ID, the Flipkart row is ignored during wallet recomputation so the same sale is not credited twice.
+CueLinks earnings are stored in the same `users/{uid}/earnings` subcollection with `source: "cuelinks-transactions"` or `source: "cuelinks-cpc-clicks"`.
 
 ### Adding more providers
 
 Facebook, Apple, GitHub, and other providers can be enabled in the same Firebase console. Add a button for them in `signin.html` / `signup.html` and call the matching Firebase provider. No backend code is needed.
 
-## Wallet and Flipkart reports (Firebase Functions)
+## Wallet and CueLinks reports (Firebase Functions)
 
-The wallet is an internal ledger, not a payment account. Flipkart pays the affiliate account directly. Users see their share of reported commission, and withdrawal requests are reviewed and paid manually.
+The wallet is an internal ledger, not a payment account. Users see their share of reported commission, and withdrawal requests are reviewed and paid manually.
 
 ### How attribution works
 
-When a user is signed in, `script.js` sets `subid` to their Firebase UID on every CueLinks tracking link. CueLinks returns that value on transactions and CPC clicks, so `functions/src/cuelinks-wallet.js` can attribute the row to `users/{uid}`. Direct Flipkart links continue to use `affExtParam1` as a fallback.
+When a user is signed in, `script.js` sets `subid` to their Firebase UID on every CueLinks tracking link. CueLinks returns that value on transactions and CPC clicks, so `functions/src/cuelinks-wallet.js` can attribute the row to `users/{uid}`.
 
-While a CueLinks campaign is still pending approval (`cuelinks.affiliated: false`), `productTargetUrl` keeps using the direct Flipkart affiliate URL so earnings are not lost. The daily catalog workflow keeps checking the campaign; once CueLinks reports `affiliated: true`, new tracking URLs are written and the site switches automatically.
+While a CueLinks campaign is still pending approval (`cuelinks.affiliated: false`), `productTargetUrl` keeps using the direct product URL so earnings are not lost. The daily workflow keeps checking the campaign; once CueLinks reports `affiliated: true`, new tracking URLs are written and the site switches automatically.
 
-The share rate is configurable with `FLIPKART_USER_SHARE_RATE` (default `0.5`). The estimated credit window is `FLIPKART_CREDIT_DAYS` (default `45`) after Flipkart marks an order approved. These are estimates only: the API does **not** expose delivered, returned, or exact payout dates.
+The share rate is configurable with `CUELINKS_USER_SHARE_RATE` (default `0.5`). The estimated credit window is `CUELINKS_CREDIT_DAYS` (default `45`) after the commission is reported. These are estimates only: the API does **not** expose delivered, returned, or exact payout dates.
 
 ### Deploy Functions
 
@@ -219,25 +206,18 @@ The project uses the Blaze plan because scheduled Functions and secrets require 
 npm --prefix functions install
 npx firebase-tools login
 npx firebase-tools use munafaduniya-68695
-npx firebase-tools functions:secrets:set FLIPKART_AFFILIATE_ID
-npx firebase-tools functions:secrets:set FLIPKART_AFFILIATE_TOKEN
 npx firebase-tools functions:secrets:set CUELINKS_API_KEY
 npx firebase-tools deploy --only functions,firestore:rules
 ```
 
 The scheduled jobs are:
 
-- `syncFlipkartReports` — every 6 hours, Asia/Kolkata; fetches up to 120 days of orders and 90 days of app installs, then recomputes every existing wallet so credit windows mature even when the underlying report rows do not change
-- `syncFlipkartOffers` — every 12 hours; stores all offers and deals of the day at `meta/flipkartOffers`
 - `syncCuelinksReports` — every 6 hours; syncs CueLinks transactions and CPC clicks, attributes rows by `subid`, and recomputes affected wallets
 - `syncCuelinksCache` — every 12 hours; refreshes campaigns, offers, channels, reference data, reports, invoices, and missing-transaction claims under `meta/cuelinks*`
 
 For optional non-secret settings, copy `functions/.env.example` to `functions/.env.munafaduniya-68695` and edit it before deploy:
 
 ```dotenv
-FLIPKART_USER_SHARE_RATE=0.5
-FLIPKART_CREDIT_DAYS=45
-REPORT_LOOKBACK_DAYS=120
 CUELINKS_USER_SHARE_RATE=0.5
 CUELINKS_CREDIT_DAYS=45
 CUELINKS_LOOKBACK_DAYS=120
@@ -245,7 +225,7 @@ CUELINKS_WEBHOOK_SECRET=choose-a-long-random-secret
 ADMIN_UIDS=firebase-uid-1,firebase-uid-2
 ```
 
-Do not put `FLIPKART_AFFILIATE_ID`, `FLIPKART_AFFILIATE_TOKEN`, or `CUELINKS_API_KEY` in that file; keep them in Functions secrets.
+Do not put `CUELINKS_API_KEY` in that file; keep it in Functions secrets.
 
 `ADMIN_UIDS` is a fallback for the admin callable. The preferred approach is a custom claim:
 
@@ -257,8 +237,6 @@ The user must sign in again after the claim is set.
 
 ### Admin API and withdrawal CLI
 
-`flipkartApi` is an admin-only callable that exposes every documented Affiliate API action: API directory, product/delta/top feeds, books, search, product lookup, feed downloads, offers, deals of the day, and order/app-install reports.
-
 `cuelinksApi` is an admin-only callable that exposes every documented CueLinks V3 action. Pass `{ action, id?, params?, body? }`. Actions include `ping`, `convertLink`, `monetizeLink`, `listCampaigns`, `getAllCampaigns`, `getCampaign`, `requestCampaignAccess`, `listCountries`, `listCategories`, `listChannels`, `getAllChannels`, `getChannel`, `createChannel`, `updateChannel`, `deleteChannel`, `setDefaultChannel`, `listOffers`, `getAllOffers`, `getOffer`, `listTransactions`, `getAllTransactions`, `getTransaction`, `listCpcClicks`, `getAllCpcClicks`, `performanceReport`, `campaignsReport`, `earningsReport`, `unmonetizedTrafficReport`, `listMissingTransactions`, `getAllMissingTransactions`, `getMissingTransaction`, `createMissingTransaction`, `updateMissingTransaction`, `deleteMissingTransaction`, `listInvoices`, `getAllInvoices`, `getInvoice`, `getInvoiceTransactions`, `syncReports`, and `syncCache`.
 
 `cuelinksConvert` is a callable used for on-demand link conversion. It requires a signed-in user and always forces `subid` to their Firebase UID. The API key never reaches the browser.
@@ -268,26 +246,20 @@ The user must sign in again after the claim is set.
 For local admin work:
 
 ```bash
-node functions/scripts/flipkart-api.mjs --action search --params '{"query":"iphone","resultCount":5}'
 node functions/scripts/cuelinks-api.mjs --action listCampaigns --params '{"q":"flipkart"}'
 node functions/scripts/cuelinks-api.mjs --action performanceReport --params '{"start_date":"2026-10-01","end_date":"2026-10-31"}'
-node functions/scripts/sync-reports.mjs
 node functions/scripts/sync-cuelinks.mjs
 node functions/scripts/update-withdrawal.mjs <userId> <withdrawalId> approved "Verified"
 node functions/scripts/update-withdrawal.mjs <userId> <withdrawalId> paid "UPI transfer done"
 ```
 
-`sync-reports.mjs`, `sync-cuelinks.mjs`, and `update-withdrawal.mjs` use Application Default Credentials. Run `gcloud auth application-default login` first, or point `GOOGLE_APPLICATION_CREDENTIALS` at a service-account key that is **never committed**.
+`sync-cuelinks.mjs` and `update-withdrawal.mjs` use Application Default Credentials. Run `gcloud auth application-default login` first, or point `GOOGLE_APPLICATION_CREDENTIALS` at a service-account key that is **never committed**.
 
 ### Important limitations
 
-- Flipkart's Orders Report exposes `tentative`, `pending`, `approved`, `cancelled`, and `disapproved`; there is no delivered/returned event.
-- The site cannot see Flipkart's exact payout date. `expectedCreditAt` is an estimate from the configured credit window.
+- The site cannot see the network's exact payout date. `expectedCreditAt` is an estimate from the configured credit window.
 - The wallet is display-only until an admin marks a withdrawal `paid`. No payout provider is integrated.
-- The affiliate token must remain server-side. Do not add it to `firebase-config.js`, `script.js`, or any committed file.
-- Flipkart rate-limits the API to 20 calls/second per affiliate; the client serialises requests and retries transient failures.
-- Cloud Functions callables cap responses at about 10 MB, so use `functions/scripts/flipkart-api.mjs` for full category feeds and raw feed downloads.
-- Product feed URLs expire quickly (roughly 10 hours). Always resolve them fresh from the API directory; do not cache signed URLs.
+- The CueLinks API key must remain server-side. Do not add it to `firebase-config.js`, `script.js`, or any committed file.
 
 ## Deploy
 
@@ -300,8 +272,8 @@ After GitHub provisions the custom-domain TLS certificate, enable **Enforce HTTP
 
 ## Notes
 
-- Flipkart affiliate credentials are read from `.env` or environment variables. `.env` is ignored by Git.
-- The browser only receives product data and the affiliate ID, never the affiliate token.
+- The CueLinks API key is read from `.env` or environment variables. `.env` is ignored by Git.
+- The browser only receives public product data and CueLinks tracking links, never the API key.
 - Wallet balances are estimates until an admin marks a withdrawal paid. They are not a promise of payment.
 - Flipkart prices, discounts, and availability can change at any time.
 - Flipkart is a trademark of Flipkart Private Limited. This site is independent and is not owned by Flipkart.

@@ -4,8 +4,7 @@ import { onCall, onRequest, HttpsError } from "firebase-functions/v2/https";
 import { onSchedule } from "firebase-functions/v2/scheduler";
 import { defineSecret } from "firebase-functions/params";
 import { logger } from "firebase-functions";
-import { flipkart } from "./flipkart.js";
-import { syncReports, recomputeWallet, isFirebaseUid } from "./wallet.js";
+import { recomputeWallet, isFirebaseUid } from "./wallet.js";
 import { cuelinks } from "./cuelinks.js";
 import {
   syncCuelinksReports as runCuelinksReports,
@@ -19,9 +18,6 @@ initializeApp();
 const db = getFirestore();
 const REGION = "asia-south1";
 const MIN_WITHDRAWAL_PAISE = 10000;
-const flipkartId = defineSecret("FLIPKART_AFFILIATE_ID");
-const flipkartToken = defineSecret("FLIPKART_AFFILIATE_TOKEN");
-const flipkartSecrets = [flipkartId, flipkartToken];
 const cuelinksKey = defineSecret("CUELINKS_API_KEY");
 const cuelinksSecrets = [cuelinksKey];
 
@@ -90,56 +86,6 @@ function validateWithdrawal(data) {
     ifsc: method === "bank" ? ifsc : "",
   };
 }
-
-export const syncFlipkartReports = onSchedule(
-  {
-    schedule: "every 6 hours",
-    timeZone: "Asia/Kolkata",
-    region: REGION,
-    secrets: flipkartSecrets,
-    timeoutSeconds: 540,
-    memory: "512MiB",
-  },
-  async () => {
-    const result = await syncReports();
-    logger.info("Flipkart reports synced.", result);
-  }
-);
-
-export const syncFlipkartOffers = onSchedule(
-  {
-    schedule: "every 12 hours",
-    timeZone: "Asia/Kolkata",
-    region: REGION,
-    secrets: flipkartSecrets,
-    timeoutSeconds: 300,
-    memory: "256MiB",
-  },
-  async () => {
-    const [offers, deals] = await Promise.all([
-      flipkart.allOffers({ format: "json" }),
-      flipkart.dotd({ format: "json" }),
-    ]);
-
-    const allOffers = Array.isArray(offers && offers.allOffersList)
-      ? offers.allOffersList.slice(0, 120)
-      : [];
-    const dotd = Array.isArray(deals && deals.dotdList)
-      ? deals.dotdList.slice(0, 80)
-      : [];
-
-    await db.doc("meta/flipkartOffers").set({
-      generatedAt: FieldValue.serverTimestamp(),
-      allOffers,
-      dotd,
-    });
-
-    logger.info("Flipkart offers synced.", {
-      offers: allOffers.length,
-      dotd: dotd.length,
-    });
-  }
-);
 
 export const syncCuelinksReports = onSchedule(
   {
@@ -402,61 +348,6 @@ export const cuelinksWebhook = onRequest(
       logger.error("Cuelinks webhook failed.", error);
       response.status(500).json({ error: "Webhook processing failed" });
     }
-  }
-);
-
-export const flipkartApi = onCall(
-  {
-    region: REGION,
-    secrets: flipkartSecrets,
-    timeoutSeconds: 180,
-    memory: "512MiB",
-  },
-  async (request) => {
-    assertAdmin(request);
-
-    const data = request.data || {};
-    const action = cleanText(data.action, 60);
-    const params = data.params || {};
-    const handlers = {
-      apiDirectory: () => flipkart.apiDirectory(params),
-      productFeed: () => flipkart.productFeed(params),
-      deltaFeed: () => flipkart.deltaFeed(params),
-      topSelling: () => flipkart.topSelling(params),
-      booksDirectory: () => flipkart.booksDirectory(params),
-      topBooks: () => flipkart.topBooks(params),
-      search: () => flipkart.search(params),
-      product: () => flipkart.product(params),
-      feedDownloadListing: () => flipkart.feedDownloadListing(params),
-      downloadFeed: async () => {
-        const buffer = await flipkart.downloadFeed(params);
-        return {
-          base64: buffer.toString("base64"),
-          bytes: buffer.length,
-        };
-      },
-      allOffers: () => flipkart.allOffers(params),
-      dotd: () => flipkart.dotd(params),
-      ordersReport: () => flipkart.ordersReport(params),
-      allOrdersReport: () => flipkart.allOrdersReport(params),
-      appInstallReport: () => flipkart.appInstallReport(params),
-      allAppInstallReport: () => flipkart.allAppInstallReport(params),
-    };
-
-    const handler = handlers[action];
-    if (!handler) {
-      throw new HttpsError(
-        "invalid-argument",
-        `Unknown action "${action}". Available actions: ${Object.keys(
-          handlers
-        ).join(", ")}.`
-      );
-    }
-
-    return {
-      action,
-      data: await handler(),
-    };
   }
 );
 

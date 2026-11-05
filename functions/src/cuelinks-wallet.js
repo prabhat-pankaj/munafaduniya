@@ -25,13 +25,7 @@ function numberEnv(name, fallback) {
 
 function userShareRate() {
   return Math.min(
-    Math.max(
-      numberEnv(
-        "CUELINKS_USER_SHARE_RATE",
-        numberEnv("FLIPKART_USER_SHARE_RATE", DEFAULT_USER_SHARE)
-      ),
-      0
-    ),
+    Math.max(numberEnv("CUELINKS_USER_SHARE_RATE", DEFAULT_USER_SHARE), 0),
     1
   );
 }
@@ -39,12 +33,7 @@ function userShareRate() {
 function creditDays() {
   return Math.max(
     0,
-    Math.round(
-      numberEnv(
-        "CUELINKS_CREDIT_DAYS",
-        numberEnv("FLIPKART_CREDIT_DAYS", DEFAULT_CREDIT_DAYS)
-      )
-    )
+    Math.round(numberEnv("CUELINKS_CREDIT_DAYS", DEFAULT_CREDIT_DAYS))
   );
 }
 

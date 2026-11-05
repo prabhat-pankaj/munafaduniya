@@ -336,20 +336,11 @@
     var carouselControls = carouselPrev
       ? carouselPrev.closest(".carousel-controls")
       : null;
-    var searchResults = document.getElementById("searchResults");
-    var searchResultsGrid = document.getElementById("searchResultsGrid");
-    var searchSummary = document.getElementById("searchSummary");
-    var searchEmpty = document.getElementById("searchEmpty");
-    var searchForm = document.querySelector(".header-search");
-    var searchInput = document.getElementById("headerSearch");
-    var bestDealsSection = document.getElementById("bestDeals");
-    var featuredSection = document.getElementById("featured");
     var cuelinksSection = document.getElementById("cuelinksDeals");
     var cuelinksGrid = document.getElementById("cuelinksGrid");
     var cuelinksStatus = document.getElementById("cuelinksStatus");
     var cuelinksCount = document.getElementById("cuelinksCount");
     var cuelinksMore = document.getElementById("cuelinksMore");
-    var activeSearchQuery = "";
 
     var catalog = null;
     var catalogAffiliate = {
@@ -937,128 +928,6 @@
         });
     }
 
-    function searchProducts(query) {
-      var terms = String(query || "")
-        .toLowerCase()
-        .split(/\s+/)
-        .filter(Boolean);
-
-      if (!terms.length) {
-        return [];
-      }
-
-      return products
-        .filter(function (product) {
-          if (!product || !productTargetUrl(product)) {
-            return false;
-          }
-          var haystack = [
-            product.title,
-            product.brand,
-            product.categoryLabel,
-            product.category
-          ]
-            .join(" ")
-            .toLowerCase();
-          return terms.every(function (term) {
-            return haystack.indexOf(term) !== -1;
-          });
-        })
-        .sort(function (a, b) {
-          var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
-          var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
-          return (
-            bSaving - aSaving ||
-            (b.discount || 0) - (a.discount || 0) ||
-            (b.price || 0) - (a.price || 0)
-          );
-        });
-    }
-
-    function setSearchMode(isActive) {
-      if (bestDealsSection) {
-        bestDealsSection.hidden = isActive;
-      }
-      if (featuredSection) {
-        featuredSection.hidden = isActive;
-      }
-      if (cuelinksSection) {
-        if (isActive) {
-          cuelinksSection.hidden = true;
-        } else if (cuelinksSection.dataset.loaded === "true") {
-          cuelinksSection.hidden = false;
-        }
-      }
-      if (categorySections) {
-        categorySections.hidden = isActive;
-      }
-      if (searchResults) {
-        searchResults.hidden = !isActive;
-      }
-    }
-
-    function applySearch(query, options) {
-      options = options || {};
-      activeSearchQuery = String(query || "").trim();
-
-      if (searchInput) {
-        searchInput.value = activeSearchQuery;
-      }
-
-      if (!activeSearchQuery) {
-        setSearchMode(false);
-        if (searchResultsGrid) {
-          searchResultsGrid.innerHTML = "";
-        }
-        return;
-      }
-
-      setSearchMode(true);
-
-      var matches = searchProducts(activeSearchQuery).slice(0, 80);
-      if (searchSummary) {
-        searchSummary.textContent =
-          matches.length === 0
-            ? 'No deals found for "' + activeSearchQuery + '".'
-            : matches.length +
-              (matches.length === 1 ? " deal" : " deals") +
-              ' matching "' +
-              activeSearchQuery +
-              '".';
-      }
-      if (searchEmpty) {
-        searchEmpty.hidden = matches.length !== 0;
-      }
-      if (searchResultsGrid) {
-        searchResultsGrid.innerHTML = matches
-          .map(function (product) {
-            return productCard(product, { showCategory: true });
-          })
-          .join("");
-        attachImageFallbacks(searchResultsGrid);
-        observeReveals(searchResultsGrid);
-      }
-
-      if (options.scroll && searchResults) {
-        searchResults.scrollIntoView({ behavior: "smooth", block: "start" });
-      }
-    }
-
-    if (searchForm) {
-      searchForm.addEventListener("submit", function (event) {
-        event.preventDefault();
-        applySearch(searchInput ? searchInput.value : "", { scroll: true });
-
-        var url = new URL(window.location.href);
-        if (activeSearchQuery) {
-          url.searchParams.set("q", activeSearchQuery);
-        } else {
-          url.searchParams.delete("q");
-        }
-        window.history.replaceState({}, "", url);
-      });
-    }
-
     function stopSpotlight() {
       if (spotlightTimer) {
         window.clearInterval(spotlightTimer);
@@ -1580,11 +1449,6 @@
         renderFeatured(featuredProducts);
         renderCategories();
         updateCategoryChips();
-
-        var initialQuery = new URLSearchParams(window.location.search).get("q");
-        if (initialQuery && initialQuery.trim()) {
-          applySearch(initialQuery.trim());
-        }
       })
       .catch(function () {
         if (catalogStatus) {
