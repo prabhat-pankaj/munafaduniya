@@ -39,7 +39,7 @@ function setStatus(message, type) {
 }
 
 function redirectHome() {
-  window.location.replace("index.html");
+  window.location.replace("/");
 }
 
 function delay(ms) {
@@ -734,7 +734,7 @@ function initAccount() {
       try {
         await fb.authModule.signOut(fb.auth);
       } finally {
-        window.location.href = "index.html";
+        window.location.href = "/";
       }
     });
   }

@@ -191,7 +191,7 @@ function initHeaderMenu() {
     }
     signout.disabled = true;
     if (!fb || !fb.authModule) {
-      window.location.replace("index.html");
+      window.location.replace("/");
       return;
     }
     fb.authModule
@@ -200,7 +200,7 @@ function initHeaderMenu() {
         console.warn("Could not sign out.", error);
       })
       .finally(function () {
-        window.location.replace("index.html");
+        window.location.replace("/");
       });
   });
 }

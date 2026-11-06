@@ -1025,6 +1025,8 @@ h1 {
 .best-deal-card,
 .best-deal-skeleton {
   flex: 0 0 clamp(500px, 56%, 700px);
+  width: clamp(500px, 56%, 700px);
+  height: clamp(300px, 30vw, 360px);
   scroll-snap-align: start;
 }
 
@@ -1088,8 +1090,8 @@ h1 {
   z-index: 1;
   display: grid;
   flex: 0 0 48%;
+  height: 100%;
   place-items: center;
-  aspect-ratio: 1 / 1;
   padding: 1.1rem;
   background: var(--media-bg);
   overflow: hidden;
@@ -1220,7 +1222,7 @@ h1 {
 
 .best-deal-skeleton-media {
   flex: 0 0 44%;
-  aspect-ratio: 1 / 1;
+  height: 100%;
   border-radius: 12px;
   background: linear-gradient(
     90deg,
@@ -1287,6 +1289,8 @@ h1 {
 }
 
 #featured,
+#how-it-works,
+#faq,
 #disclosure {
   scroll-margin-top: 9rem;
 }
@@ -1818,6 +1822,83 @@ h1 {
   border-color: var(--ghost-border-hover);
 }
 
+.info-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.info-card {
+  padding: clamp(1.2rem, 2.5vw, 1.7rem);
+  border: 1px solid var(--glass-border);
+  border-radius: 18px;
+  background: var(--glass-bg), var(--surface-soft);
+  box-shadow: var(--glass-shadow);
+  backdrop-filter: blur(18px) saturate(150%);
+  -webkit-backdrop-filter: blur(18px) saturate(150%);
+}
+
+.info-card h3 {
+  margin: 0 0 0.55rem;
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: -0.02em;
+}
+
+.info-card p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.88rem;
+  line-height: 1.65;
+}
+
+.faq-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.faq-item {
+  padding: 0 1.25rem;
+  border: 1px solid var(--glass-border);
+  border-radius: 16px;
+  background: var(--glass-bg), var(--surface-soft);
+  box-shadow: inset 0 1px 0 var(--glass-highlight);
+}
+
+.faq-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 0;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  list-style: none;
+}
+
+.faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.faq-item summary::after {
+  content: "+";
+  color: var(--accent);
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.faq-item[open] summary::after {
+  content: "−";
+}
+
+.faq-item p {
+  margin: 0 0 1.15rem;
+  color: var(--muted-strong);
+  font-size: 0.9rem;
+  line-height: 1.65;
+}
+
 .disclosure {
   margin-top: clamp(2.5rem, 5vw, 4rem);
   padding: 1.4rem;
@@ -1951,6 +2032,14 @@ h1 {
 
 .page-hero .lede {
   margin-bottom: 0;
+}
+
+.home-hero {
+  padding-bottom: clamp(1.5rem, 3vw, 2.5rem);
+}
+
+.home-hero h1 {
+  max-width: 900px;
 }
 
 .contact-layout {
@@ -3095,6 +3184,14 @@ select {
   .contact-copy {
     max-width: 680px;
   }
+
+  .info-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .info-card:last-child {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 760px) {
@@ -3109,6 +3206,8 @@ select {
   .best-deal-card,
   .best-deal-skeleton {
     flex: 0 0 clamp(360px, 84%, 560px);
+    width: clamp(360px, 84%, 560px);
+    height: 320px;
   }
 
   .product-grid {
@@ -3177,6 +3276,18 @@ select {
     align-items: flex-start;
   }
 
+  .info-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .info-card:last-child {
+    grid-column: auto;
+  }
+
+  .faq-item summary {
+    font-size: 0.95rem;
+  }
+
   .field-row {
     grid-template-columns: 1fr;
   }
@@ -3188,6 +3299,8 @@ select {
 
   #bestDeals,
   #featured,
+  #how-it-works,
+  #faq,
   #disclosure {
     scroll-margin-top: 8.5rem;
   }
@@ -3207,6 +3320,8 @@ select {
   .best-deal-card,
   .best-deal-skeleton {
     flex: 0 0 min(94vw, 540px);
+    width: min(94vw, 540px);
+    height: 300px;
   }
 
   .header-wallet {
