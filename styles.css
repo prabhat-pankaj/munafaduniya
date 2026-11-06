@@ -3400,7 +3400,8 @@ h1 {
 }
 
 .home-hero h1 {
-  max-width: 900px;
+  max-width: none;
+  font-size: clamp(1.9rem, 3.4vw, 3rem);
   margin-inline: auto;
 }
 
