@@ -1,4 +1,4 @@
-name: Update CueLinks data
+name: Update affiliate data
 
 on:
   schedule:
@@ -9,7 +9,7 @@ permissions:
   contents: write
 
 concurrency:
-  group: cuelinks-data
+  group: affiliate-data
   cancel-in-progress: true
 
 jobs:
@@ -35,14 +35,27 @@ jobs:
           CUELINKS_API_KEY: ${{ secrets.CUELINKS_API_KEY }}
         run: node scripts/fetch-cuelinks-offers.mjs
 
-      - name: Commit updated catalog and offers
+      - name: Fetch CJ partner offers
+        env:
+          CJ_ACCESS_TOKEN: ${{ secrets.CJ_ACCESS_TOKEN }}
+          CJ_WEBSITE_ID: ${{ secrets.CJ_WEBSITE_ID }}
+        run: node scripts/fetch-cj-offers.mjs
+
+      - name: Fetch CJ products
+        env:
+          CJ_ACCESS_TOKEN: ${{ secrets.CJ_ACCESS_TOKEN }}
+          CJ_COMPANY_ID: ${{ secrets.CJ_COMPANY_ID }}
+          CJ_WEBSITE_ID: ${{ secrets.CJ_WEBSITE_ID }}
+        run: node scripts/fetch-cj-products.mjs
+
+      - name: Commit updated affiliate data
         run: |
-          if [ -z "$(git status --porcelain -- data/catalog.json data/cuelinks-offers.json)" ]; then
-            echo "No catalog or offer changes to commit."
+          if [ -z "$(git status --porcelain -- data)" ]; then
+            echo "No affiliate data changes to commit."
             exit 0
           fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data/catalog.json data/cuelinks-offers.json
-          git commit -m "chore: refresh CueLinks catalog and offers"
+          git add data
+          git commit -m "chore: refresh affiliate data"
           git push

@@ -1,8 +1,8 @@
-# munafaduniya.com — Flipkart deals site
+# munafaduniya.com — deals site
 
-A static deals site for `munafaduniya.com`. It shows fresh Flipkart product deals across mobiles, electronics, fashion, home, beauty, sports, and appliances, with a full-width best-deals carousel, a featured deals grid, and category sections. Product links are monetized through the **CueLinks V3 API**, and signed-in orders are attributed back to the user's wallet.
+A static deals site for `munafaduniya.com`. Its best-deals carousel and featured grid are built from live partner offers from **CueLinks** and **CJ Affiliate**, while the category sections use the Flipkart product catalog in `data/catalog.json`. Product links are monetized through CueLinks and CJ, and signed-in orders are attributed back to the user's wallet.
 
-The site is plain HTML, CSS, and JavaScript. There is no build step for the pages. Product data lives in `data/catalog.json`, and the browser reads that JSON file. CueLinks partner offers are refreshed by a scheduled GitHub Action.
+The site is plain HTML, CSS, and JavaScript. There is no build step for the pages. Partner offers and products are refreshed by a scheduled GitHub Action.
 
 User accounts use **Firebase Authentication** and **Firestore**. GitHub Pages still serves the static files; it never stores user data. Passwords are hashed by Firebase and are never written to this repository.
 
@@ -13,17 +13,17 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 ## Features
 
 - Product catalog served from `data/catalog.json`
-- Featured deals grid that uses the same responsive layout as the category Shop sections
-- Full-width, auto-rotating best-deals carousel with unique products from multiple categories, reshuffled on every page load
-- Live CueLinks partner offers section with campaign logos, coupon codes, and `via CueLinks` badges
+- Featured deals grid built from live CueLinks and CJ partner offers
+- Full-width, auto-rotating best-deals carousel with partner offers from CueLinks and CJ
+- Live partner offers section with campaign logos and coupon codes
 - Seven category sections with expandable product grids
-- Product cards with price, MRP, savings, discount, source logos, and CueLinks affiliate links
+- Product cards with price, MRP, savings, discount, and CueLinks or CJ affiliate links
 - Responsive dark/light theme that follows the visitor's system preference and remembers the choice
 - Contact form with validation, a spam honeypot, and AJAX submission
 - Affiliate disclosure and Flipkart trademark notice
 - Account pages with email/password, Google, and phone OTP sign-in via Firebase
 - Wallet page with available/pending/lifetime earnings and withdrawal history
-- Signed-in CueLinks links carry the Firebase UID in `subid` so orders can be attributed
+- Signed-in CueLinks links carry the Firebase UID in `subid`; CJ links carry it in `sid`, so orders can be attributed
 - Scheduled Functions sync CueLinks transactions every 6 hours
 - Every documented CueLinks V3 endpoint is available through the admin `cuelinksApi` callable, plus an authenticated `cuelinksConvert` callable and a postback webhook
 - No product data hardcoded in the HTML
@@ -53,25 +53,30 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 | `script.js` | Theme, catalog/offers rendering, carousel, tracking, and AJAX form |
 | `data/catalog.json` | Generated product catalog read by the site |
 | `data/cuelinks-offers.json` | Live CueLinks partner offers and campaign logos |
+| `data/cj-offers.json` | Live CJ Link Search offers (written once joined advertisers exist) |
+| `data/cj-products.json` | Live CJ Product Feed products (written once joined INR advertisers exist) |
 | `scripts/apply-cuelinks.mjs` | Converts every catalog product URL into a CueLinks tracking link |
 | `scripts/fetch-cuelinks-offers.mjs` | Builds `data/cuelinks-offers.json` from the CueLinks offers API |
-| `.github/workflows/update-cuelinks-data.yml` | Refreshes CueLinks links and offers daily and commits changes |
+| `scripts/fetch-cj-offers.mjs` | Builds `data/cj-offers.json` from the CJ Link Search API |
+| `scripts/fetch-cj-products.mjs` | Builds `data/cj-products.json` from the CJ Product Feed API |
+| `scripts/cj-utils.mjs` | Shared CJ env loading and XML helpers |
+| `.github/workflows/update-affiliate-data.yml` | Refreshes CueLinks and CJ data daily and commits changes |
 | `.env.example` | Local credential template |
 | `logo.png` | munafaduniya logo and favicon |
 | `CNAME` | Custom domain for GitHub Pages |
 
 ## How the product data works
 
-The product catalog is stored in `data/catalog.json`. `scripts/apply-cuelinks.mjs` converts every catalog product URL into a CueLinks tracking link, and `scripts/fetch-cuelinks-offers.mjs` builds `data/cuelinks-offers.json` from the CueLinks offers API. Both run on a schedule.
+The product catalog is stored in `data/catalog.json`. `scripts/apply-cuelinks.mjs` converts every catalog product URL into a CueLinks tracking link, and `scripts/fetch-cuelinks-offers.mjs` builds `data/cuelinks-offers.json` from the CueLinks offers API. The CJ scripts build `data/cj-offers.json` from Link Search and `data/cj-products.json` from the Product Feed. All of them run on a schedule.
 
-On each page load, the best-deals carousel selects top deals from the catalog and reshuffles them, so the visible set changes on refresh.
+On each page load, the site merges the CueLinks offers with any CJ offers and products, deduplicates them, then builds the best-deals carousel and featured grid. The category sections still read the Flipkart catalog.
+
+CJ only returns records for advertisers you have joined. Until you join programmes in the CJ dashboard, the CJ scripts warn and leave any existing `data/cj-*.json` files untouched.
 
 The catalog contains:
 
 - `generatedAt` — timestamp of the build
 - `categories` — category keys, labels, and counts
-- `spotlight` — fallback product ID for the best-deals carousel
-- `featured` — ordered product IDs for the featured row; the best-deals picks are excluded from it at render time
 - `products` — normalised products with `id`, `title`, `brand`, `image`, `url`, `price`, `mrp`, `discount`, `category`, and `categoryPath`
 
 ## Local setup
@@ -82,10 +87,13 @@ The catalog contains:
    cp .env.example .env
    ```
 
-2. Add your CueLinks key to `.env`:
+2. Add your affiliate credentials to `.env`:
 
    ```dotenv
    CUELINKS_API_KEY=your-cuelinks-api-key
+   CJ_ACCESS_TOKEN=your-cj-personal-access-token
+   CJ_COMPANY_ID=your-cj-company-id
+   CJ_WEBSITE_ID=your-cj-website-id
    ```
 
 3. Convert the catalog links through CueLinks and fetch partner offers:
@@ -93,7 +101,11 @@ The catalog contains:
    ```bash
    node scripts/apply-cuelinks.mjs
    node scripts/fetch-cuelinks-offers.mjs
+   node scripts/fetch-cj-offers.mjs
+   node scripts/fetch-cj-products.mjs
    ```
+
+   The CJ scripts exit successfully with a warning when the account has no joined advertisers or no joined INR products.
 
 4. Serve the site:
 
@@ -111,8 +123,11 @@ Add these repository secrets under **Settings → Secrets and variables → Acti
 
 - `CUELINKS_API_KEY`
 - `CUELINKS_CHANNEL_ID` (optional)
+- `CJ_ACCESS_TOKEN`
+- `CJ_COMPANY_ID`
+- `CJ_WEBSITE_ID`
 
-The workflow runs daily at `02:17 UTC` and can also be started manually from the Actions tab. It has `contents: write` permission and commits `data/catalog.json` and `data/cuelinks-offers.json` only when they change. If you protect the `main` branch, allow the workflow to push or adjust the workflow to open a pull request instead.
+The workflow runs daily at `02:17 UTC` and can also be started manually from the Actions tab. It has `contents: write` permission and commits changes under `data/` only when the files change. If you protect the `main` branch, allow the workflow to push or adjust the workflow to open a pull request instead.
 
 ## FormSubmit activation
 
@@ -259,7 +274,8 @@ node functions/scripts/update-withdrawal.mjs <userId> <withdrawalId> paid "UPI t
 
 - The site cannot see the network's exact payout date. `expectedCreditAt` is an estimate from the configured credit window.
 - The wallet is display-only until an admin marks a withdrawal `paid`. No payout provider is integrated.
-- The CueLinks API key must remain server-side. Do not add it to `firebase-config.js`, `script.js`, or any committed file.
+- The CueLinks API key and CJ access token must remain server-side. Do not add them to `firebase-config.js`, `script.js`, or any committed file.
+- CJ Link Search and Product Feed only return joined advertisers. An empty CJ account is expected to produce no offers or products.
 
 ## Deploy
 
@@ -272,8 +288,8 @@ After GitHub provisions the custom-domain TLS certificate, enable **Enforce HTTP
 
 ## Notes
 
-- The CueLinks API key is read from `.env` or environment variables. `.env` is ignored by Git.
-- The browser only receives public product data and CueLinks tracking links, never the API key.
+- The CueLinks API key and CJ access token are read from `.env` or environment variables. `.env` is ignored by Git.
+- The browser only receives public product data and affiliate tracking links, never the API keys.
 - Wallet balances are estimates until an admin marks a withdrawal paid. They are not a promise of payment.
 - Flipkart prices, discounts, and availability can change at any time.
 - Flipkart is a trademark of Flipkart Private Limited. This site is independent and is not owned by Flipkart.

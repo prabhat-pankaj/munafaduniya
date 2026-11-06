@@ -131,12 +131,31 @@
     );
   }
 
+  function isCJUrl(url) {
+    return (
+      url.protocol === "https:" &&
+      (/(^|\.)cj\.com$/.test(url.hostname) ||
+        /(^|\.)(tkqlhce|anrdoezrs|dpbolvw|jdoqocy|kqzyfj|emjcd|ftjcfx|awltovhc|lduhtrp|tqlkg|yceml|qksrv)\.(com|net)$/.test(
+          url.hostname
+        ))
+    );
+  }
+
   function withAffiliateTracking(rawUrl) {
     try {
       var url = new URL(rawUrl);
 
       if (isCuelinksUrl(url)) {
         url.searchParams.set("subid", affiliateUid || "site");
+        return url.href;
+      }
+
+      if (isCJUrl(url)) {
+        if (affiliateUid) {
+          url.searchParams.set("sid", affiliateUid);
+        } else {
+          url.searchParams.delete("sid");
+        }
         return url.href;
       }
 
@@ -158,7 +177,7 @@
   function applyAffiliateTracking(scope) {
     (scope || document)
       .querySelectorAll(
-        'a[href*="flipkart.com"], a[href*="linksredirect.com"], a[href*="clnk.in"], a[href*="cuelinks.com"]'
+        'a[href*="flipkart.com"], a[href*="linksredirect.com"], a[href*="clnk.in"], a[href*="cuelinks.com"], a[href*="cj.com"], a[href*="tkqlhce.com"], a[href*="anrdoezrs.net"], a[href*="dpbolvw.net"], a[href*="jdoqocy.com"], a[href*="kqzyfj.com"], a[href*="emjcd.com"], a[href*="ftjcfx.com"], a[href*="awltovhc.com"], a[href*="lduhtrp.net"], a[href*="tqlkg.com"], a[href*="yceml.net"], a[href*="qksrv.net"]'
       )
       .forEach(function (link) {
         link.href = withAffiliateTracking(link.href);
@@ -349,7 +368,6 @@
       network: "Flipkart"
     };
     var products = [];
-    var productById = Object.create(null);
     var carouselTimer = null;
     var carouselPaused = false;
     var spotlightTimer = null;
@@ -408,7 +426,8 @@
           (/(^|\.)flipkart\.com$/.test(url.hostname) ||
             /(^|\.)linksredirect\.com$/.test(url.hostname) ||
             /(^|\.)clnk\.in$/.test(url.hostname) ||
-            /(^|\.)cuelinks\.com$/.test(url.hostname))
+            /(^|\.)cuelinks\.com$/.test(url.hostname) ||
+            isCJUrl(url))
         ) {
           return url.href;
         }
@@ -461,35 +480,58 @@
       return "";
     }
 
-    function sourceBadge(affiliate) {
-      var name = (affiliate && affiliate.name) || "Flipkart";
-      var logo = affiliate && affiliate.logo
-        ? safeLogoUrl(affiliate.logo)
-        : "";
-      var logoMarkup = logo
-        ? '<img src="' +
-          escapeHtml(logo) +
-          '" alt="" width="18" height="18" loading="lazy" decoding="async">'
-        : "";
+    function safeOfferImageUrl(rawUrl) {
+      try {
+        var url = new URL(rawUrl);
+        if (url.protocol === "https:") {
+          return url.href;
+        }
+      } catch (error) {
+        return "";
+      }
+      return "";
+    }
 
+    function campaignInitials(name) {
       return (
-        '<span class="source-badge" title="' +
-        escapeHtml("Source: " + name) +
-        '">' +
-        logoMarkup +
-        "<span>" +
-        escapeHtml(name) +
-        "</span></span>"
+        String(name || "")
+          .split(/\s+/)
+          .filter(Boolean)
+          .slice(0, 2)
+          .map(function (part) {
+            return part.charAt(0).toUpperCase();
+          })
+          .join("") || "CL"
       );
     }
 
-    function networkBadge(network) {
+    function offerImageMarkup(offer) {
+      var productImage = safeOfferImageUrl(offer.productImage || "");
+      if (productImage) {
+        return (
+          '<img class="offer-logo offer-product-image" src="' +
+          escapeHtml(productImage) +
+          '" alt="' +
+          escapeHtml(offer.title || offer.campaignName || "Partner offer") +
+          '" width="400" height="400" loading="lazy" decoding="async">'
+        );
+      }
+
+      var logo = safeLogoUrl(offer.campaignLogo);
+      if (logo) {
+        return (
+          '<img class="offer-logo" src="' +
+          escapeHtml(logo) +
+          '" alt="' +
+          escapeHtml((offer.campaignName || "Partner") + " logo") +
+          '" width="120" height="120" loading="lazy" decoding="async">'
+        );
+      }
+
       return (
-        '<span class="source-badge source-badge-network" title="' +
-        escapeHtml("Offered via " + network) +
-        '"><span>via ' +
-        escapeHtml(network) +
-        "</span></span>"
+        '<span class="offer-logo offer-logo-fallback" aria-hidden="true">' +
+        escapeHtml(campaignInitials(offer.campaignName)) +
+        "</span>"
       );
     }
 
@@ -542,7 +584,6 @@
 
       var image = safeImageUrl(product.image);
       var affiliateName = catalogAffiliate.name || "Flipkart";
-      var source = sourceBadge(catalogAffiliate);
       var discount =
         product.discount > 0
           ? '<span class="discount-badge">' +
@@ -582,7 +623,6 @@
         ">" +
         '<div class="product-media">' +
         discount +
-        source +
         '<img src="' +
         escapeHtml(image) +
         '" alt="' +
@@ -614,154 +654,70 @@
       );
     }
 
-    function pickBestDeals(allProducts, limit) {
-      var byCategory = Object.create(null);
-
-      allProducts.forEach(function (product) {
-        if (
-          !product ||
-          !product.id ||
-          product.price < 299 ||
-          product.discount < 10
-        ) {
-          return;
-        }
-
-        var key = product.category || "other";
-        if (!byCategory[key]) {
-          byCategory[key] = [];
-        }
-        byCategory[key].push(product);
-      });
-
-      var pool = [];
-      var selectedIds = Object.create(null);
-
-      Object.keys(byCategory).forEach(function (key) {
-        var ranked = byCategory[key].slice().sort(function (a, b) {
-          var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
-          var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
-          return (
-            bSaving - aSaving ||
-            (b.discount || 0) - (a.discount || 0) ||
-            (b.price || 0) - (a.price || 0)
-          );
-        });
-
-        var shortlist = ranked.slice(0, Math.min(3, ranked.length));
-        var roll = Math.random();
-        var pickIndex = roll > 0.85 ? 2 : roll > 0.6 ? 1 : 0;
-        var pick = shortlist[Math.min(pickIndex, shortlist.length - 1)];
-
-        if (pick) {
-          pool.push(pick);
-          selectedIds[pick.id] = true;
-        }
-      });
-
-      if (pool.length < limit) {
-        var fillers = allProducts
-          .filter(function (product) {
-            return (
-              product &&
-              product.id &&
-              !selectedIds[product.id] &&
-              product.price >= 299 &&
-              product.discount >= 10
-            );
-          })
-          .sort(function (a, b) {
-            var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
-            var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
-            return (
-              bSaving - aSaving ||
-              (b.discount || 0) - (a.discount || 0) ||
-              (b.price || 0) - (a.price || 0)
-            );
-          });
-
-        for (var i = 0; i < fillers.length && pool.length < limit; i += 1) {
-          pool.push(fillers[i]);
-          selectedIds[fillers[i].id] = true;
-        }
-      }
-
-      return pool
-        .sort(function (a, b) {
-          var aSaving = Math.max(0, (a.mrp || a.price) - a.price);
-          var bSaving = Math.max(0, (b.mrp || b.price) - b.price);
-          return (
-            bSaving - aSaving ||
-            (b.discount || 0) - (a.discount || 0) ||
-            (b.price || 0) - (a.price || 0)
-          );
-        })
-        .slice(0, limit);
-    }
-
-    function bestDealCard(product, index) {
-      var url = productTargetUrl(product);
+    function bestDealOfferCard(offer, index) {
+      var url = safeProductUrl(offer.trackingUrl);
       if (!url) {
         return "";
       }
 
-      var image = safeImageUrl(product.image);
-      var affiliateName = catalogAffiliate.name || "Flipkart";
-      var source = sourceBadge(catalogAffiliate);
-      var category = product.categoryLabel || affiliateName + " deal";
-      var brand = product.brand || category;
       var discount =
-        product.discount > 0
+        offer.percentOff > 0
           ? '<span class="best-deal-badge">' +
-            Math.round(product.discount) +
+            Math.round(offer.percentOff) +
             "% off</span>"
           : "";
-      var mrp =
-        product.mrp > product.price
-          ? '<span class="best-deal-mrp">' +
-            formatPrice(product.mrp) +
+      var typeLabel = offer.offerType === "coupon" ? "Coupon" : "Deal";
+      var chips = ['<span class="offer-chip">' + typeLabel + "</span>"];
+      if (offer.couponCode) {
+        chips.push(
+          '<span class="offer-chip offer-code">Code: ' +
+            escapeHtml(offer.couponCode) +
             "</span>"
+        );
+      }
+      var price =
+        offer.discountPrice > 0
+          ? '<div class="best-deal-price-row"><span class="best-deal-price">' +
+            formatPrice(offer.discountPrice) +
+            "</span>" +
+            (offer.originalPrice > offer.discountPrice
+              ? '<span class="best-deal-mrp">' +
+                formatPrice(offer.originalPrice) +
+                "</span>"
+              : "") +
+            "</div>"
           : "";
-      var savings =
-        product.mrp > product.price ? product.mrp - product.price : 0;
-      var savingLabel =
-        savings > 0
-          ? '<span class="best-deal-save">Save ' +
-            formatPrice(savings) +
-            "</span>"
-          : "";
+      var validity = offer.endDate
+        ? '<span class="offer-validity">Valid till ' +
+          escapeHtml(formatShortDate(offer.endDate)) +
+          "</span>"
+        : "";
 
       return (
         '<a class="best-deal-card" href="' +
         escapeHtml(withAffiliateTracking(url)) +
         '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
-        escapeHtml(product.title + " on " + affiliateName) +
+        escapeHtml(offer.title + " on " + offer.campaignName) +
         '" style="--deal-delay:' +
         Math.min(index, 8) * 55 +
         'ms">' +
         discount +
         '<div class="best-deal-media">' +
-        source +
-        '<img src="' +
-        escapeHtml(image) +
-        '" alt="' +
-        escapeHtml(product.title) +
-        '" width="400" height="400" loading="' +
-        (index < 4 ? "eager" : "lazy") +
-        '" decoding="async"></div>' +
+        offerImageMarkup(offer) +
+        "</div>" +
         '<div class="best-deal-body">' +
         '<p class="best-deal-brand">' +
-        escapeHtml(brand) +
+        escapeHtml(offer.campaignName) +
         "</p>" +
         '<h3 class="best-deal-title">' +
-        escapeHtml(product.title) +
+        escapeHtml(offer.title) +
         "</h3>" +
-        '<div class="best-deal-price-row"><span class="best-deal-price">' +
-        formatPrice(product.price) +
-        "</span>" +
-        mrp +
+        '<div class="offer-meta">' +
+        chips.join("") +
         "</div>" +
-        savingLabel +
+        price +
+        validity +
+        '<span class="best-deal-save">View offer</span>' +
         "</div>" +
         "</a>"
       );
@@ -776,24 +732,6 @@
       var hiddenAttr = options.hidden ? " hidden" : "";
       var extraAttr = options.hidden ? ' data-extra="true"' : "";
 
-      var logo = safeLogoUrl(offer.campaignLogo);
-      var initials = String(offer.campaignName || "CueLinks")
-        .split(/\s+/)
-        .filter(Boolean)
-        .slice(0, 2)
-        .map(function (part) {
-          return part.charAt(0).toUpperCase();
-        })
-        .join("");
-      var logoMarkup = logo
-        ? '<img class="offer-logo" src="' +
-          escapeHtml(logo) +
-          '" alt="' +
-          escapeHtml(offer.campaignName + " logo") +
-          '" width="120" height="120" loading="lazy" decoding="async">'
-        : '<span class="offer-logo offer-logo-fallback" aria-hidden="true">' +
-          escapeHtml(initials || "CL") +
-          "</span>";
       var typeLabel = offer.offerType === "coupon" ? "Coupon" : "Deal";
       var chips = ['<span class="offer-chip">' + typeLabel + "</span>"];
       if (offer.percentOff > 0) {
@@ -838,8 +776,7 @@
         extraAttr +
         ">" +
         '<div class="product-media offer-media">' +
-        networkBadge("CueLinks") +
-        logoMarkup +
+        offerImageMarkup(offer) +
         "</div>" +
         '<div class="product-body">' +
         '<p class="product-brand">' +
@@ -866,23 +803,147 @@
       );
     }
 
-    function renderCuelinksOffers(payload) {
+    function loadJson(url) {
+      return fetch(url, { cache: "no-store" })
+        .then(function (response) {
+          if (!response.ok) {
+            throw new Error("HTTP " + response.status);
+          }
+          return response.json();
+        })
+        .catch(function () {
+          return null;
+        });
+    }
+
+    function productToOffer(product) {
+      if (!product) {
+        return null;
+      }
+
+      var trackingUrl =
+        product.trackingUrl ||
+        (product.linkCode && product.linkCode.clickUrl) ||
+        "";
+
+      return {
+        id: "cj-product-" + (product.id || trackingUrl),
+        title: String(product.title || "").trim(),
+        description: String(product.description || "").trim(),
+        couponCode: "",
+        offerType: "deal",
+        campaignName: String(product.advertiserName || "CJ partner"),
+        campaignLogo: "",
+        productImage: String(product.imageLink || ""),
+        categories: Array.isArray(product.categories) ? product.categories : [],
+        trackingUrl: String(trackingUrl),
+        startDate: "",
+        endDate: "",
+        originalPrice: Number.isFinite(product.originalPrice)
+          ? product.originalPrice
+          : null,
+        discountPrice: Number.isFinite(product.discountPrice)
+          ? product.discountPrice
+          : null,
+        percentOff: Number.isFinite(product.percentOff)
+          ? product.percentOff
+          : null,
+        updatedAt: String(product.updatedAt || ""),
+        network: "CJ"
+      };
+    }
+
+    function collectOffers(results) {
+      var offers = [];
+      var seen = Object.create(null);
+
+      function add(offer) {
+        if (!offer || !safeProductUrl(offer.trackingUrl)) {
+          return;
+        }
+        var key = String(offer.trackingUrl);
+        if (seen[key]) {
+          return;
+        }
+        seen[key] = true;
+        offers.push(offer);
+      }
+
+      [results[0], results[1]].forEach(function (payload) {
+        if (payload && Array.isArray(payload.offers)) {
+          payload.offers.forEach(add);
+        }
+      });
+
+      var products = results[2] && results[2].products;
+      if (Array.isArray(products)) {
+        products.forEach(function (product) {
+          add(productToOffer(product));
+        });
+      }
+
+      return offers;
+    }
+
+    function interleaveOffers(offers) {
+      var groups = Object.create(null);
+      var order = [];
+
+      offers.forEach(function (offer) {
+        var key = offer.network || "Partner";
+        if (!groups[key]) {
+          groups[key] = [];
+          order.push(key);
+        }
+        groups[key].push(offer);
+      });
+
+      var result = [];
+      var index = 0;
+      var added = true;
+
+      while (added) {
+        added = false;
+        order.forEach(function (key) {
+          if (groups[key][index]) {
+            result.push(groups[key][index]);
+            added = true;
+          }
+        });
+        index += 1;
+      }
+
+      return result;
+    }
+
+    function renderPartnerOffers(offers) {
+      var ordered = interleaveOffers(offers);
+      var bestCount = Math.min(12, Math.ceil(ordered.length / 2));
+      var bestOffers = ordered.slice(0, bestCount);
+      var featuredOffers = ordered.slice(bestCount, bestCount + 12);
+      var shown = Object.create(null);
+
+      bestOffers.concat(featuredOffers).forEach(function (offer) {
+        shown[String(offer.trackingUrl)] = true;
+      });
+
+      var gridOffers = ordered.filter(function (offer) {
+        return !shown[String(offer.trackingUrl)];
+      });
+
+      renderBestDealsOffers(bestOffers);
+      renderFeaturedOffers(featuredOffers);
+
       if (!cuelinksSection || !cuelinksGrid) {
         return;
       }
 
-      var offers = payload && Array.isArray(payload.offers)
-        ? payload.offers.filter(function (offer) {
-            return offer && safeProductUrl(offer.trackingUrl);
-          })
-        : [];
-
-      if (!offers.length) {
+      if (!gridOffers.length) {
         cuelinksSection.hidden = true;
         return;
       }
 
-      cuelinksGrid.innerHTML = offers
+      cuelinksGrid.innerHTML = gridOffers
         .map(function (offer, index) {
           return offerCard(offer, { hidden: index >= 12 });
         })
@@ -894,38 +955,30 @@
 
       if (cuelinksCount) {
         cuelinksCount.textContent =
-          offers.length + (offers.length === 1 ? " offer" : " offers");
+          gridOffers.length + (gridOffers.length === 1 ? " offer" : " offers");
       }
       if (cuelinksStatus) {
         cuelinksStatus.hidden = true;
       }
       if (cuelinksMore) {
-        cuelinksMore.hidden = offers.length <= 12;
+        cuelinksMore.hidden = gridOffers.length <= 12;
         cuelinksMore.setAttribute("data-expanded", "false");
-        cuelinksMore.setAttribute("data-total", String(offers.length));
-        cuelinksMore.textContent = "Show all " + offers.length + " offers";
+        cuelinksMore.setAttribute("data-total", String(gridOffers.length));
+        cuelinksMore.textContent = "Show all " + gridOffers.length + " offers";
       }
 
       attachImageFallbacks(cuelinksGrid);
       observeReveals(cuelinksGrid);
     }
 
-    function loadCuelinksOffers() {
-      if (!cuelinksSection || !cuelinksGrid) {
-        return;
-      }
-
-      fetch("data/cuelinks-offers.json", { cache: "no-store" })
-        .then(function (response) {
-          if (!response.ok) {
-            throw new Error("HTTP " + response.status);
-          }
-          return response.json();
-        })
-        .then(renderCuelinksOffers)
-        .catch(function () {
-          cuelinksSection.hidden = true;
-        });
+    function loadPartnerOffers() {
+      Promise.all([
+        loadJson("data/cuelinks-offers.json"),
+        loadJson("data/cj-offers.json"),
+        loadJson("data/cj-products.json")
+      ]).then(function (results) {
+        renderPartnerOffers(collectOffers(results));
+      });
     }
 
     function stopSpotlight() {
@@ -1019,26 +1072,26 @@
       }
     }
 
-    function renderSpotlightCarousel(spotlightProducts) {
+    function renderBestDealsOffers(offers) {
       if (!spotlight) {
         return;
       }
 
       stopSpotlight();
 
-      var carouselProducts = spotlightProducts.filter(function (product) {
-        return product && productTargetUrl(product);
+      var validOffers = offers.filter(function (offer) {
+        return offer && safeProductUrl(offer.trackingUrl);
       });
 
-      if (!carouselProducts.length) {
+      if (!validOffers.length) {
         spotlight.innerHTML =
           '<div class="best-deals-loading"><span class="best-deals-kicker">Today\'s best deals</span><p>No best deals right now. Browse the deals below.</p></div>';
         return;
       }
 
-      spotlight.innerHTML = carouselProducts
-        .map(function (product, index) {
-          return bestDealCard(product, index);
+      spotlight.innerHTML = validOffers
+        .map(function (offer, index) {
+          return bestDealOfferCard(offer, index);
         })
         .join("");
 
@@ -1048,8 +1101,8 @@
       startSpotlight();
     }
 
-    function renderFeatured(featuredProducts) {
-      if (!featuredProducts.length) {
+    function renderFeaturedOffers(offers) {
+      if (!offers.length) {
         carousel.innerHTML = "";
         if (catalogStatus) {
           catalogStatus.hidden = false;
@@ -1059,9 +1112,9 @@
         return;
       }
 
-      carousel.innerHTML = featuredProducts
-        .map(function (product) {
-          return productCard(product);
+      carousel.innerHTML = offers
+        .map(function (offer) {
+          return offerCard(offer);
         })
         .join("");
 
@@ -1365,7 +1418,7 @@
       }, 150)
     );
 
-    loadCuelinksOffers();
+    loadPartnerOffers();
 
     fetch("data/catalog.json", { cache: "no-store" })
       .then(function (response) {
@@ -1387,81 +1440,14 @@
           return product && product.id;
         });
 
-        products.forEach(function (product) {
-          productById[product.id] = product;
-        });
-
         updateUpdatedDates(data.generatedAt);
-
-        var spotlightProducts = pickBestDeals(products, 12);
-        if (!spotlightProducts.length) {
-          var fallbackSpotlight = productById[data.spotlight] || products[0];
-          spotlightProducts = fallbackSpotlight ? [fallbackSpotlight] : [];
-        }
-
-        var spotlightIds = Object.create(null);
-        spotlightProducts.forEach(function (product) {
-          spotlightIds[product.id] = true;
-        });
-
-        var featuredProducts = (Array.isArray(data.featured) ? data.featured : [])
-          .map(function (id) {
-            return productById[id];
-          })
-          .filter(function (product) {
-            return product && !spotlightIds[product.id];
-          });
-
-        var featuredIds = Object.create(null);
-        featuredProducts.forEach(function (product) {
-          featuredIds[product.id] = true;
-        });
-
-        if (featuredProducts.length < 12) {
-          var fillers = products
-            .filter(function (product) {
-              return (
-                product &&
-                product.id &&
-                !spotlightIds[product.id] &&
-                !featuredIds[product.id] &&
-                product.discount > 0
-              );
-            })
-            .sort(function (a, b) {
-              return (
-                (b.discount || 0) - (a.discount || 0) ||
-                (b.price || 0) - (a.price || 0)
-              );
-            });
-
-          for (
-            var i = 0;
-            i < fillers.length && featuredProducts.length < 12;
-            i += 1
-          ) {
-            featuredProducts.push(fillers[i]);
-            featuredIds[fillers[i].id] = true;
-          }
-        }
-
-        renderSpotlightCarousel(spotlightProducts);
-        renderFeatured(featuredProducts);
         renderCategories();
         updateCategoryChips();
       })
       .catch(function () {
-        if (catalogStatus) {
-          catalogStatus.hidden = false;
-          catalogStatus.textContent =
-            "We could not load today's deals. Please refresh the page or email munafaduniya@gmail.com.";
-        }
-
-        carousel.innerHTML = "";
-
-        if (spotlight) {
-          spotlight.innerHTML =
-            '<div class="best-deals-loading"><span class="best-deals-kicker">Today\'s best deals</span><p>Deals are taking a short break. Please refresh in a moment.</p></div>';
+        if (categorySections) {
+          categorySections.innerHTML =
+            '<section class="section container"><p class="catalog-status">We could not load the category deals. Please refresh the page or email munafaduniya@gmail.com.</p></section>';
         }
       });
   }
