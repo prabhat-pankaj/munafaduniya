@@ -3390,15 +3390,25 @@ h1 {
 
 .home-hero {
   max-width: none;
-  padding-bottom: clamp(1.5rem, 3vw, 2rem);
+  padding-top: clamp(2.25rem, 4.5vw, 3.5rem);
+  padding-bottom: clamp(1.75rem, 3.5vw, 2.5rem);
+  text-align: center;
+}
+
+.home-hero .eyebrow {
+  margin-bottom: 0.8rem;
 }
 
 .home-hero h1 {
-  max-width: 820px;
+  max-width: 900px;
+  margin-inline: auto;
 }
 
 .home-hero .lede {
   max-width: 42rem;
+  margin-inline: auto;
+  margin-bottom: 0;
+  text-wrap: balance;
 }
 
 .spotlight-section {
