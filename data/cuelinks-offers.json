@@ -2,7 +2,7 @@
   "generatedAt": "2026-11-04T14:37:19.514Z",
   "source": "CueLinks Publisher API",
   "network": "CueLinks",
-  "total": 60,
+  "total": 59,
   "offers": [
     {
       "id": "132132",
@@ -268,28 +268,6 @@
       "discountPrice": null,
       "percentOff": null,
       "updatedAt": "2026-11-04T12:42:26Z"
-    },
-    {
-      "id": "132105",
-      "title": "Flat 20% Off Domestic Hotels + 5% Cashback with Flipkart Axis Credit Card",
-      "description": "Save a flat 20% on your domestic hotel reservations.Receive an additional 5% cashback with purchases made using Flipkart Axis Bank Credit Cards.Plan your affordable stay with ease!This special promotion is available for all customers for limited time.",
-      "terms": "",
-      "couponCode": "CTFKAXIS",
-      "offerType": "coupon",
-      "campaignId": 58550,
-      "campaignName": "Cleartrip Hotels",
-      "campaignLogo": "https://cdn0.cuelinks.com/campaigns/58550/medium/Screenshot_2026-07-06_120052.png?1783339259",
-      "campaignDomain": "cleartrip.com",
-      "categories": [
-        "Travel"
-      ],
-      "trackingUrl": "https://linksredirect.com/?cid=30746&source=api&url=https%3A%2F%2Fwww.cleartrip.com%2Fhotels",
-      "startDate": "2026-11-04",
-      "endDate": "2026-11-30",
-      "originalPrice": null,
-      "discountPrice": null,
-      "percentOff": null,
-      "updatedAt": "2026-11-04T12:36:14Z"
     },
     {
       "id": "132102",

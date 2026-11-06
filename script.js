@@ -116,12 +116,6 @@
 
   var affiliateUid = null;
 
-  function isFlipkartUrl(url) {
-    return (
-      url.protocol === "https:" && /(^|\.)flipkart\.com$/.test(url.hostname)
-    );
-  }
-
   function isCuelinksUrl(url) {
     return (
       url.protocol === "https:" &&
@@ -138,6 +132,13 @@
         /(^|\.)(tkqlhce|anrdoezrs|dpbolvw|jdoqocy|kqzyfj|emjcd|ftjcfx|awltovhc|lduhtrp|tqlkg|yceml|qksrv)\.(com|net)$/.test(
           url.hostname
         ))
+    );
+  }
+
+  function isAliExpressUrl(url) {
+    return (
+      url.protocol === "https:" &&
+      /(^|\.)aliexpress\.(com|us|ru)$/.test(url.hostname)
     );
   }
 
@@ -159,16 +160,7 @@
         return url.href;
       }
 
-      if (!isFlipkartUrl(url)) {
-        return rawUrl;
-      }
-
-      if (affiliateUid) {
-        url.searchParams.set("affExtParam1", affiliateUid);
-      } else {
-        url.searchParams.delete("affExtParam1");
-      }
-      return url.href;
+      return rawUrl;
     } catch (error) {
       return rawUrl;
     }
@@ -177,7 +169,7 @@
   function applyAffiliateTracking(scope) {
     (scope || document)
       .querySelectorAll(
-        'a[href*="flipkart.com"], a[href*="linksredirect.com"], a[href*="clnk.in"], a[href*="cuelinks.com"], a[href*="cj.com"], a[href*="tkqlhce.com"], a[href*="anrdoezrs.net"], a[href*="dpbolvw.net"], a[href*="jdoqocy.com"], a[href*="kqzyfj.com"], a[href*="emjcd.com"], a[href*="ftjcfx.com"], a[href*="awltovhc.com"], a[href*="lduhtrp.net"], a[href*="tqlkg.com"], a[href*="yceml.net"], a[href*="qksrv.net"]'
+        'a[href*="linksredirect.com"], a[href*="clnk.in"], a[href*="cuelinks.com"], a[href*="cj.com"], a[href*="tkqlhce.com"], a[href*="anrdoezrs.net"], a[href*="dpbolvw.net"], a[href*="jdoqocy.com"], a[href*="kqzyfj.com"], a[href*="emjcd.com"], a[href*="ftjcfx.com"], a[href*="awltovhc.com"], a[href*="lduhtrp.net"], a[href*="tqlkg.com"], a[href*="yceml.net"], a[href*="qksrv.net"], a[href*="aliexpress.com"], a[href*="aliexpress.us"], a[href*="aliexpress.ru"]'
       )
       .forEach(function (link) {
         link.href = withAffiliateTracking(link.href);
@@ -348,8 +340,7 @@
 
   function initDealsPage(carousel) {
     var spotlight = document.getElementById("spotlight");
-    var categorySections = document.getElementById("categorySections");
-    var catalogStatus = document.getElementById("catalogStatus");
+    var featuredStatus = document.getElementById("featuredStatus");
     var carouselPrev = document.getElementById("carouselPrev");
     var carouselNext = document.getElementById("carouselNext");
     var carouselControls = carouselPrev
@@ -361,13 +352,6 @@
     var cuelinksCount = document.getElementById("cuelinksCount");
     var cuelinksMore = document.getElementById("cuelinksMore");
 
-    var catalog = null;
-    var catalogAffiliate = {
-      name: "Flipkart",
-      logo: "",
-      network: "Flipkart"
-    };
-    var products = [];
     var carouselTimer = null;
     var carouselPaused = false;
     var spotlightTimer = null;
@@ -381,23 +365,6 @@
       currency: "INR",
       maximumFractionDigits: 0
     });
-
-    var categoryIcons = {
-      mobiles:
-        '<rect x="7" y="2.5" width="10" height="19" rx="2"/><path d="M10.5 5h3M11 18.5h2"/>',
-      electronics:
-        '<rect x="3" y="5" width="18" height="12" rx="2"/><path d="M8 21h8M12 17v4"/>',
-      fashion:
-        '<path d="M9 4l3 2 3-2 3 3-2 2v10H8V9L6 7z"/><path d="M9 4c0 1.5 1.3 2.5 3 2.5S15 5.5 15 4"/>',
-      home:
-        '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M9 20v-6h6v6"/>',
-      beauty:
-        '<path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M5 17l1 2 2 1-2 1-1 2-1-2-2-1 2-1z"/>',
-      sports:
-        '<circle cx="12" cy="12" r="9"/><path d="M12 3a14 14 0 000 18M3 12a14 14 0 0018 0"/>',
-      appliances:
-        '<path d="M13 2L4 14h7l-1 8 9-12h-7z"/>'
-    };
 
     function escapeHtml(value) {
       return String(value == null ? "" : value).replace(/[&<>"']/g, function (
@@ -413,6 +380,39 @@
       });
     }
 
+    var blockedMerchantPattern = /(?:flipkart|flixcart|fkrt\.it|fkcdn)/i;
+
+    function isBlockedMerchantOffer(offer) {
+      if (!offer) {
+        return false;
+      }
+
+      var fields = [
+        offer.campaignName,
+        offer.campaignDomain,
+        offer.trackingUrl,
+        offer.title,
+        offer.description,
+        offer.terms,
+        offer.productImage
+      ];
+
+      if (
+        fields.some(function (value) {
+          return blockedMerchantPattern.test(String(value || ""));
+        })
+      ) {
+        return true;
+      }
+
+      return (
+        Array.isArray(offer.categories) &&
+        offer.categories.some(function (category) {
+          return blockedMerchantPattern.test(String(category || ""));
+        })
+      );
+    }
+
     function formatPrice(value) {
       var number = Number(value);
       return Number.isFinite(number) ? priceFormatter.format(number) : "";
@@ -423,11 +423,11 @@
         var url = new URL(rawUrl);
         if (
           url.protocol === "https:" &&
-          (/(^|\.)flipkart\.com$/.test(url.hostname) ||
-            /(^|\.)linksredirect\.com$/.test(url.hostname) ||
+          (/(^|\.)linksredirect\.com$/.test(url.hostname) ||
             /(^|\.)clnk\.in$/.test(url.hostname) ||
             /(^|\.)cuelinks\.com$/.test(url.hostname) ||
-            isCJUrl(url))
+            isCJUrl(url) ||
+            isAliExpressUrl(url))
         ) {
           return url.href;
         }
@@ -435,34 +435,6 @@
         return null;
       }
       return null;
-    }
-
-    function productTargetUrl(product) {
-      var tracked = product && product.trackingUrl
-        ? safeProductUrl(product.trackingUrl)
-        : null;
-      var cuelinks = product && product.cuelinks;
-      if (tracked && (!cuelinks || cuelinks.affiliated !== false)) {
-        return tracked;
-      }
-      return safeProductUrl(product && product.url);
-    }
-
-    function safeImageUrl(rawUrl) {
-      try {
-        var url = new URL(rawUrl);
-        if (
-          url.protocol === "https:" &&
-          (/(^|\.)flixcart\.com$/.test(url.hostname) ||
-            /(^|\.)fkcdn\.com$/.test(url.hostname) ||
-            /(^|\.)flipkart\.com$/.test(url.hostname))
-        ) {
-          return url.href;
-        }
-      } catch (error) {
-        return "logo.png";
-      }
-      return "logo.png";
     }
 
     function safeLogoUrl(rawUrl) {
@@ -550,17 +522,6 @@
       });
     }
 
-    function categoryIcon(key) {
-      var paths =
-        categoryIcons[key] ||
-        '<path d="M4 7h16M4 12h16M4 17h16"/>';
-      return (
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-        paths +
-        "</svg>"
-      );
-    }
-
     function attachImageFallbacks(container) {
       container.querySelectorAll("img").forEach(function (image) {
         image.addEventListener("error", function () {
@@ -572,86 +533,6 @@
           image.classList.add("img-fallback");
         });
       });
-    }
-
-    function productCard(product, options) {
-      options = options || {};
-
-      var url = productTargetUrl(product);
-      if (!url) {
-        return "";
-      }
-
-      var image = safeImageUrl(product.image);
-      var affiliateName = catalogAffiliate.name || "Flipkart";
-      var discount =
-        product.discount > 0
-          ? '<span class="discount-badge">' +
-            Math.round(product.discount) +
-            "% off</span>"
-          : "";
-      var mrp =
-        product.mrp > product.price
-          ? '<span class="product-mrp">' +
-            formatPrice(product.mrp) +
-            "</span>"
-          : "";
-      var savings =
-        product.mrp > product.price ? product.mrp - product.price : 0;
-      var savingLabel =
-        savings > 0
-          ? '<span class="product-off">Save ' + formatPrice(savings) + "</span>"
-          : "";
-      var category =
-        options.showCategory && product.categoryLabel
-          ? ' <span class="product-category">' +
-            escapeHtml(product.categoryLabel) +
-            "</span>"
-          : "";
-      var brand = escapeHtml(
-        product.brand || product.categoryLabel || "Flipkart deal"
-      );
-      var hiddenAttr = options.hidden ? ' hidden data-extra="true"' : "";
-
-      return (
-        '<a class="product-card" href="' +
-        escapeHtml(withAffiliateTracking(url)) +
-        '" target="_blank" rel="sponsored noopener noreferrer" aria-label="' +
-        escapeHtml(product.title + " on " + affiliateName) +
-        '"' +
-        hiddenAttr +
-        ">" +
-        '<div class="product-media">' +
-        discount +
-        '<img src="' +
-        escapeHtml(image) +
-        '" alt="' +
-        escapeHtml(product.title) +
-        '" width="400" height="400" loading="lazy" decoding="async">' +
-        "</div>" +
-        '<div class="product-body">' +
-        '<p class="product-brand">' +
-        brand +
-        category +
-        "</p>" +
-        '<h3 class="product-title">' +
-        escapeHtml(product.title) +
-        "</h3>" +
-        '<div class="product-price-row">' +
-        '<span class="product-price">' +
-        formatPrice(product.price) +
-        "</span>" +
-        mrp +
-        savingLabel +
-        "</div>" +
-        '<span class="product-cta"><span>View on ' +
-        escapeHtml(affiliateName) +
-        "</span>" +
-        '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7M9 7h8v8"/></svg>' +
-        "</span>" +
-        "</div>" +
-        "</a>"
-      );
     }
 
     function bestDealOfferCard(offer, index) {
@@ -816,25 +697,36 @@
         });
     }
 
-    function productToOffer(product) {
+    function productToOffer(product, network) {
       if (!product) {
         return null;
       }
 
       var trackingUrl =
         product.trackingUrl ||
+        product.promotionLink ||
         (product.linkCode && product.linkCode.clickUrl) ||
         "";
+      var resolvedNetwork = product.network || network || "Partner";
 
       return {
-        id: "cj-product-" + (product.id || trackingUrl),
+        id:
+          String(resolvedNetwork).toLowerCase() +
+          "-product-" +
+          (product.id || trackingUrl),
         title: String(product.title || "").trim(),
         description: String(product.description || "").trim(),
         couponCode: "",
         offerType: "deal",
-        campaignName: String(product.advertiserName || "CJ partner"),
+        campaignName: String(
+          product.advertiserName ||
+            product.shopName ||
+            (resolvedNetwork === "AliExpress"
+              ? "AliExpress"
+              : resolvedNetwork + " partner")
+        ),
         campaignLogo: "",
-        productImage: String(product.imageLink || ""),
+        productImage: String(product.imageLink || product.productImage || ""),
         categories: Array.isArray(product.categories) ? product.categories : [],
         trackingUrl: String(trackingUrl),
         startDate: "",
@@ -849,7 +741,7 @@
           ? product.percentOff
           : null,
         updatedAt: String(product.updatedAt || ""),
-        network: "CJ"
+        network: resolvedNetwork
       };
     }
 
@@ -858,7 +750,11 @@
       var seen = Object.create(null);
 
       function add(offer) {
-        if (!offer || !safeProductUrl(offer.trackingUrl)) {
+        if (
+          !offer ||
+          isBlockedMerchantOffer(offer) ||
+          !safeProductUrl(offer.trackingUrl)
+        ) {
           return;
         }
         var key = String(offer.trackingUrl);
@@ -875,12 +771,14 @@
         }
       });
 
-      var products = results[2] && results[2].products;
-      if (Array.isArray(products)) {
-        products.forEach(function (product) {
-          add(productToOffer(product));
+      [results[2], results[3]].forEach(function (payload) {
+        if (!payload || !Array.isArray(payload.products)) {
+          return;
+        }
+        payload.products.forEach(function (product) {
+          add(productToOffer(product, payload.network));
         });
-      }
+      });
 
       return offers;
     }
@@ -975,8 +873,21 @@
       Promise.all([
         loadJson("data/cuelinks-offers.json"),
         loadJson("data/cj-offers.json"),
-        loadJson("data/cj-products.json")
+        loadJson("data/cj-products.json"),
+        loadJson("data/aliexpress-products.json")
       ]).then(function (results) {
+        var generatedAt = results
+          .map(function (payload) {
+            return payload && payload.generatedAt;
+          })
+          .filter(Boolean)
+          .sort()
+          .pop();
+
+        if (generatedAt) {
+          updateUpdatedDates(generatedAt);
+        }
+
         renderPartnerOffers(collectOffers(results));
       });
     }
@@ -1104,9 +1015,9 @@
     function renderFeaturedOffers(offers) {
       if (!offers.length) {
         carousel.innerHTML = "";
-        if (catalogStatus) {
-          catalogStatus.hidden = false;
-          catalogStatus.textContent =
+        if (featuredStatus) {
+          featuredStatus.hidden = false;
+          featuredStatus.textContent =
             "No featured deals are available right now. Please check back soon.";
         }
         return;
@@ -1120,86 +1031,9 @@
 
       attachImageFallbacks(carousel);
       observeReveals(carousel);
-      if (catalogStatus) {
-        catalogStatus.hidden = true;
+      if (featuredStatus) {
+        featuredStatus.hidden = true;
       }
-    }
-
-    function renderCategories() {
-      if (!categorySections || !catalog) {
-        return;
-      }
-
-      var markup = catalog.categories
-        .map(function (category) {
-          var categoryProducts = products.filter(function (product) {
-            return product.category === category.key;
-          });
-
-          if (!categoryProducts.length) {
-            return "";
-          }
-
-          var cards = categoryProducts
-            .map(function (product, index) {
-              return productCard(product, { hidden: index >= 8 });
-            })
-            .join("");
-
-          var showMore =
-            categoryProducts.length > 8
-              ? '<button class="btn btn-ghost show-more" type="button" data-show-more="' +
-                escapeHtml(category.key) +
-                '" data-total="' +
-                categoryProducts.length +
-                '">Show all ' +
-                categoryProducts.length +
-                " deals</button>"
-              : "";
-
-          return (
-            '<section class="section container category-section" id="cat-' +
-            escapeHtml(category.key) +
-            '">' +
-            '<div class="section-head">' +
-            '<div class="section-title-wrap">' +
-            '<span class="category-icon" aria-hidden="true">' +
-            categoryIcon(category.key) +
-            "</span>" +
-            '<div class="section-title"><p class="section-kicker">Shop</p><h2>' +
-            escapeHtml(category.label) +
-            "</h2></div>" +
-            "</div>" +
-            '<span class="section-count">' +
-            categoryProducts.length +
-            " deals</span>" +
-            "</div>" +
-            '<div class="product-grid">' +
-            cards +
-            "</div>" +
-            showMore +
-            "</section>"
-          );
-        })
-        .join("");
-
-      categorySections.innerHTML = markup;
-      attachImageFallbacks(categorySections);
-      observeReveals(categorySections);
-    }
-
-    function updateCategoryChips() {
-      document.querySelectorAll(".cat-chip").forEach(function (chip) {
-        var key = chip.getAttribute("data-category");
-        var category = catalog
-          ? catalog.categories.find(function (item) {
-              return item.key === key;
-            })
-          : null;
-        if (!category) {
-          chip.hidden = true;
-        }
-      });
     }
 
     function updateUpdatedDates(isoDate) {
@@ -1318,33 +1152,6 @@
       });
     }
 
-    if (categorySections) {
-      categorySections.addEventListener("click", function (event) {
-        var button = event.target.closest("[data-show-more]");
-        if (!button) {
-          return;
-        }
-
-        var section = button.closest(".category-section");
-        if (!section) {
-          return;
-        }
-
-        var extraCards = section.querySelectorAll('.product-card[data-extra="true"]');
-        var isExpanded = button.getAttribute("data-expanded") === "true";
-        var total = button.getAttribute("data-total") || "";
-
-        extraCards.forEach(function (card) {
-          card.hidden = !isExpanded ? false : true;
-        });
-
-        button.setAttribute("data-expanded", isExpanded ? "false" : "true");
-        button.textContent = isExpanded
-          ? "Show all " + total + " deals"
-          : "Show fewer deals";
-      });
-    }
-
     if (carouselPrev) {
       carouselPrev.addEventListener("click", function () {
         pauseCarousel();
@@ -1419,36 +1226,5 @@
     );
 
     loadPartnerOffers();
-
-    fetch("data/catalog.json", { cache: "no-store" })
-      .then(function (response) {
-        if (!response.ok) {
-          throw new Error("HTTP " + response.status);
-        }
-        return response.json();
-      })
-      .then(function (data) {
-        if (!data || !Array.isArray(data.products) || !data.products.length) {
-          throw new Error("Catalog is empty");
-        }
-
-        catalog = data;
-        if (data.affiliate && data.affiliate.name) {
-          catalogAffiliate = data.affiliate;
-        }
-        products = data.products.filter(function (product) {
-          return product && product.id;
-        });
-
-        updateUpdatedDates(data.generatedAt);
-        renderCategories();
-        updateCategoryChips();
-      })
-      .catch(function () {
-        if (categorySections) {
-          categorySections.innerHTML =
-            '<section class="section container"><p class="catalog-status">We could not load the category deals. Please refresh the page or email munafaduniya@gmail.com.</p></section>';
-        }
-      });
   }
 })();

@@ -24,12 +24,6 @@ jobs:
         with:
           node-version: 20
 
-      - name: Convert catalog product links with CueLinks
-        env:
-          CUELINKS_API_KEY: ${{ secrets.CUELINKS_API_KEY }}
-          CUELINKS_CHANNEL_ID: ${{ secrets.CUELINKS_CHANNEL_ID }}
-        run: node scripts/apply-cuelinks.mjs
-
       - name: Fetch CueLinks partner offers
         env:
           CUELINKS_API_KEY: ${{ secrets.CUELINKS_API_KEY }}
@@ -47,6 +41,17 @@ jobs:
           CJ_COMPANY_ID: ${{ secrets.CJ_COMPANY_ID }}
           CJ_WEBSITE_ID: ${{ secrets.CJ_WEBSITE_ID }}
         run: node scripts/fetch-cj-products.mjs
+
+      - name: Fetch AliExpress products
+        env:
+          ALIEXPRESS_APP_KEY: ${{ secrets.ALIEXPRESS_APP_KEY }}
+          ALIEXPRESS_APP_SECRET: ${{ secrets.ALIEXPRESS_APP_SECRET }}
+          ALIEXPRESS_TRACKING_ID: ${{ secrets.ALIEXPRESS_TRACKING_ID }}
+          ALIEXPRESS_KEYWORDS: ${{ vars.ALIEXPRESS_KEYWORDS }}
+          ALIEXPRESS_TARGET_CURRENCY: INR
+          ALIEXPRESS_TARGET_LANGUAGE: EN
+          ALIEXPRESS_SHIP_TO_COUNTRY: IN
+        run: node scripts/fetch-aliexpress-products.mjs
 
       - name: Commit updated affiliate data
         run: |

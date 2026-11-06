@@ -1,6 +1,7 @@
 import { mkdirSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { cjConfig, ROOT } from "./cj-utils.mjs";
+import { isFlipkartRecord } from "./offer-filters.mjs";
 
 const OUTPUT_FILE = path.join(ROOT, "data", "cj-products.json");
 const API_URL = "https://ads.api.cj.com/query";
@@ -169,6 +170,9 @@ async function main() {
     result.resultList.forEach((product) => {
       const normalized = normalizeProduct(product);
       if (!normalized) {
+        return;
+      }
+      if (isFlipkartRecord(normalized)) {
         return;
       }
       const key = `${normalized.advertiserId}:${normalized.id}`;

@@ -319,13 +319,13 @@ function renderEarnings(earnings) {
 
   if (!earnings.length) {
     body.innerHTML =
-      '<tr><td colspan="6" class="wallet-empty">No earnings yet. Shop through a tracked Flipkart link while signed in.</td></tr>';
+      '<tr><td colspan="6" class="wallet-empty">No earnings yet. Shop through a tracked partner link while signed in.</td></tr>';
     return;
   }
 
   body.innerHTML = earnings
     .map(function (earning) {
-      var title = earning.title || "Flipkart order";
+      var title = earning.title || "Partner order";
       var orderId = earning.orderId || earning.orderItemId || "";
       var status = earning.statusLabel || earning.status || "pending";
       var expected =

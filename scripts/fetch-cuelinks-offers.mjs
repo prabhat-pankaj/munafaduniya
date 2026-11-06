@@ -2,6 +2,7 @@ import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { cuelinks } from "../functions/src/cuelinks.js";
+import { filterFlipkart } from "./offer-filters.mjs";
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT_FILE = path.join(ROOT, "data", "cuelinks-offers.json");
@@ -125,9 +126,9 @@ async function main() {
     { perPage: 100, maxPages: 3 }
   );
 
-  const liveOffers = rawOffers
-    .filter((offer) => offer && offer.tracking_url)
-    .slice(0, OFFER_LIMIT);
+  const liveOffers = filterFlipkart(
+    rawOffers.filter((offer) => offer && offer.tracking_url)
+  ).slice(0, OFFER_LIMIT);
 
   if (!liveOffers.length) {
     console.warn("CueLinks returned no live offers. Existing file left untouched.");
@@ -135,9 +136,18 @@ async function main() {
   }
 
   const campaigns = await loadCampaigns(liveOffers);
-  const offers = liveOffers.map((offer) =>
-    normalizeOffer(offer, campaigns.get(String(offer.campaign_id)))
+  const offers = filterFlipkart(
+    liveOffers.map((offer) =>
+      normalizeOffer(offer, campaigns.get(String(offer.campaign_id)))
+    )
   );
+
+  if (!offers.length) {
+    console.warn(
+      "CueLinks returned no eligible offers. Existing file left untouched."
+    );
+    return;
+  }
 
   const payload = {
     generatedAt: new Date().toISOString(),

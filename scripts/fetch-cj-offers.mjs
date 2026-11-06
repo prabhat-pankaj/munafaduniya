@@ -6,6 +6,7 @@ import {
   getXmlTag,
   ROOT
 } from "./cj-utils.mjs";
+import { filterFlipkart } from "./offer-filters.mjs";
 
 const OUTPUT_FILE = path.join(ROOT, "data", "cj-offers.json");
 const API_BASE = "https://link-search.api.cj.com/v2/link-search";
@@ -98,9 +99,11 @@ async function fetchPage(config, promotionType, page) {
 
   return {
     noJoined: false,
-    links: extractXmlLinks(text)
-      .map(normalizeLink)
-      .filter((link) => link && /^https:\/\//.test(link.trackingUrl))
+    links: filterFlipkart(
+      extractXmlLinks(text)
+        .map(normalizeLink)
+        .filter((link) => link && /^https:\/\//.test(link.trackingUrl))
+    )
   };
 }
 
