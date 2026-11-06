@@ -11,7 +11,7 @@
     if (themeColor) {
       themeColor.setAttribute(
         "content",
-        theme === "light" ? "#fdf9f4" : "#0d0c0b"
+        theme === "light" ? "#f6f7f9" : "#0e1014"
       );
     }
 
