@@ -3406,9 +3406,10 @@ h1 {
 }
 
 .home-hero .lede {
-  max-width: 42rem;
+  max-width: none;
   margin-inline: auto;
   margin-bottom: 0;
+  font-size: clamp(0.9rem, 1.1vw, 1.02rem);
   text-wrap: balance;
 }
 
