@@ -26,6 +26,7 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 - Every documented CueLinks V3 endpoint is available through the admin `cuelinksApi` callable, plus an authenticated `cuelinksConvert` callable and a postback webhook
 - No product data hardcoded in the HTML
 - Blocked marketplace records are filtered out at fetch time and again in the browser
+- Free browser games hub with playable, dependency-free games served from `games/`
 
 ## Files
 
@@ -33,6 +34,8 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 | --- | --- |
 | `index.html` | Deals home page with best deals, featured deals, and partner offers |
 | `contact.html` | Website purchase, advertising, and partnership enquiry form |
+| `games.html` | Games hub listing playable browser games |
+| `games/stardust-tail/` | Stardust Tail — a self-contained HTML/CSS/JS arcade game |
 | `thank-you.html` | No-JavaScript fallback confirmation page |
 | `signin.html` | Sign-in page with email/password, Google, and phone OTP |
 | `signup.html` | Create-account page with the same sign-up methods |

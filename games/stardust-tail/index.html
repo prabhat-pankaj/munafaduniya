@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Stardust Tail is a cozy arcade flyer. Collect stardust, grow a colorful tail, and avoid void shards.">
+  <title>Stardust Tail</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='g'%3E%3Cstop offset='0' stop-color='%23ffffff'/%3E%3Cstop offset='1' stop-color='%23b48bff'/%3E%3C/radialGradient%3E%3C/defs%3E%3Ccircle cx='16' cy='16' r='11' fill='url(%23g)'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <a class="back-link" href="../../games.html" aria-label="Back to games">&larr; Games</a>
+    <canvas id="game-canvas" aria-label="Stardust Tail game area"></canvas>
+
+    <div id="hud" class="hud" hidden aria-hidden="true">
+      <div class="hud-row">
+        <div class="stat"><span class="stat-label">Score</span><span id="hud-score" class="stat-value">0</span></div>
+        <div class="stat"><span class="stat-label">Shields</span><span id="hud-shields" class="stat-value pips"></span></div>
+        <div class="stat"><span class="stat-label">Beads</span><span id="hud-beads" class="stat-value">0</span></div>
+        <div class="stat"><span class="stat-label">Combo</span><span id="hud-combo" class="stat-value">x1</span></div>
+      </div>
+    </div>
+
+    <div id="loading" class="overlay" aria-labelledby="loading-text">
+      <div class="card loading-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2 id="loading-text" class="dialog-title">Loading</h2>
+        <p class="dialog-text">Charting the stars...</p>
+      </div>
+    </div>
+
+    <main id="menu" class="overlay" hidden>
+      <div class="card menu-card">
+        <p class="eyebrow">Arcade</p>
+        <h1>Stardust Tail</h1>
+        <p class="subtitle">Collect stardust. Grow a tail. Make it yours.</p>
+        <canvas id="menu-preview" class="tail-preview menu-preview" width="560" height="132" role="img" aria-label="Sample tail preview"></canvas>
+        <p id="menu-best" class="best-chip">Best 0</p>
+        <div class="actions">
+          <button id="btn-play" class="btn btn-primary" type="button">Play</button>
+          <button id="btn-howto" class="btn btn-secondary" type="button">How to Play</button>
+        </div>
+        <p class="hint">Drag to fly, or use Arrow keys / WASD.</p>
+      </div>
+    </main>
+
+    <section id="howto" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+        <h2 id="howto-title" class="dialog-title">How to Play</h2>
+        <ul class="rules">
+          <li><span class="rule-dot rule-violet" aria-hidden="true"></span><span>Drag anywhere, or use Arrow keys / WASD, to fly your comet.</span></li>
+          <li><span class="rule-dot rule-cyan" aria-hidden="true"></span><span>Collect glowing stardust to add beads to your tail.</span></li>
+          <li><span class="rule-dot rule-amber" aria-hidden="true"></span><span>Collect three of the same shape in a row to earn a Prism bonus.</span></li>
+          <li><span class="rule-dot rule-danger" aria-hidden="true"></span><span>Avoid dark void shards. A hit costs a shield and scatters beads.</span></li>
+          <li><span class="rule-dot rule-white" aria-hidden="true"></span><span>White rainbow motes restore a shield. Lose all three shields and the run ends.</span></li>
+          <li><span class="rule-dot rule-text" aria-hidden="true"></span><span>Keyboard: Esc or P pauses. Press Esc to close any menu.</span></li>
+        </ul>
+        <div class="actions">
+          <button id="btn-howto-play" class="btn btn-primary" type="button">Play Now</button>
+          <button id="btn-howto-close" class="btn btn-secondary" type="button">Close</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tutorial" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+        <h2 id="tutorial-title" class="dialog-title">Quick Start</h2>
+        <p class="dialog-text">Fly with a drag or the Arrow keys. Collect stardust to grow your tail. Match three of the same shape for a Prism bonus, and avoid dark void shards.</p>
+        <div class="actions">
+          <button id="btn-tutorial-start" class="btn btn-primary" type="button">Start</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pause" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <h2 id="pause-title" class="dialog-title">Paused</h2>
+        <p class="dialog-text">The game is paused. Press Esc to resume.</p>
+        <div class="actions">
+          <button id="btn-resume" class="btn btn-primary" type="button">Resume</button>
+          <button id="btn-restart" class="btn btn-secondary" type="button">Restart</button>
+          <button id="btn-pause-menu" class="btn btn-secondary" type="button">Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="syspause" class="overlay" hidden>
+      <div class="card" role="status" aria-live="polite">
+        <h2 class="dialog-title">Paused</h2>
+        <p class="dialog-text">The game is paused and will resume automatically.</p>
+      </div>
+    </div>
+
+    <section id="gameover" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="go-title">
+        <h2 id="go-title" class="dialog-title">Run Complete</h2>
+        <p id="go-msg" class="dialog-text">Your tail is ready.</p>
+        <canvas id="tail-preview" class="tail-preview" width="560" height="188" role="img" aria-label="Your collected tail"></canvas>
+        <p id="go-beads" class="bead-line">Beads collected: 0</p>
+        <div class="score-grid">
+          <div class="score-box"><span class="score-label">Score</span><span id="go-score" class="score-value">0</span></div>
+          <div class="score-box"><span class="score-label">Best</span><span id="go-best" class="score-value">0</span></div>
+        </div>
+        <div class="actions">
+          <button id="btn-again" class="btn btn-primary" type="button">Fly Again</button>
+          <button id="btn-menu" class="btn btn-secondary" type="button">Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <p id="live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
