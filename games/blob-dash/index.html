@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="description" content="Blob Dash is a cosy candy-road runner. Steer your bouncy blob, hop the gaps, dodge gummy cones and collect sprinkles.">
+  <title>Blob Dash</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cdefs%3E%3CradialGradient id='b' cx='38%25' cy='34%25'%3E%3Cstop offset='0' stop-color='%23bffbe6'/%3E%3Cstop offset='1' stop-color='%231fa97e'/%3E%3C/radialGradient%3E%3C/defs%3E%3Cellipse cx='16' cy='17' rx='12' ry='11' fill='url(%23b)'/%3E%3Ccircle cx='12' cy='14' r='2.1' fill='%23fff'/%3E%3Ccircle cx='20' cy='14' r='2.1' fill='%23fff'/%3E%3Ccircle cx='12.6' cy='14.6' r='1' fill='%23123'/%3E%3Ccircle cx='20.6' cy='14.6' r='1' fill='%23123'/%3E%3C/svg%3E">
+  <script src="https://www.youtube.com/game_api/v1"></script>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div id="app">
+    <a id="back-link" class="back-link" href="../../games.html" aria-label="Back to games">&larr; Games</a>
+    <canvas id="game-canvas" aria-label="Blob Dash game area"></canvas>
+
+    <div id="hud" class="hud" hidden aria-hidden="true">
+      <div class="hud-bar">
+        <div class="stat"><span class="stat-label">Score</span><span id="hud-score" class="stat-value">0</span></div>
+        <div class="stat"><span class="stat-label">Hearts</span><span id="hud-hearts" class="stat-value pips"></span></div>
+        <div class="stat"><span class="stat-label">Sprinkles</span><span id="hud-coins" class="stat-value">0</span></div>
+      </div>
+      <div class="hud-buttons">
+        <button id="btn-sound" class="icon-btn" type="button" aria-label="Mute sound" aria-pressed="true">
+          <svg class="ico-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16.5 8.5a5 5 0 010 7"/><path d="M19 6a8.5 8.5 0 010 12"/></svg>
+          <svg class="ico-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4z"/><path d="M16 9l5 6M21 9l-5 6"/></svg>
+        </button>
+        <button id="btn-pause" class="icon-btn" type="button" aria-label="Pause game">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <button id="btn-jump" class="jump-btn" type="button" hidden aria-label="Jump">Jump</button>
+
+    <div id="loading" class="overlay" aria-labelledby="loading-text">
+      <div class="card loading-card">
+        <div class="spinner" aria-hidden="true"></div>
+        <h2 id="loading-text" class="dialog-title">Loading</h2>
+        <p class="dialog-text">Frosting the road…</p>
+      </div>
+    </div>
+
+    <main id="menu" class="overlay" hidden>
+      <div class="card menu-card">
+        <p class="eyebrow">Candy runner</p>
+        <h1>Blob Dash</h1>
+        <p class="subtitle">Roll, hop and splash your way through the Sweet Summit.</p>
+        <div class="blob-preview" aria-hidden="true"><span class="blob-preview-body"></span></div>
+        <p id="menu-best" class="best-chip">Best 0</p>
+        <div class="actions">
+          <button id="btn-play" class="btn btn-primary" type="button">Play</button>
+          <button id="btn-howto" class="btn btn-secondary" type="button">How to Play</button>
+        </div>
+        <p class="hint">Drag to steer, or use Arrow keys / A-D. Tap or Space to hop.</p>
+      </div>
+    </main>
+
+    <section id="howto" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="howto-title">
+        <h2 id="howto-title" class="dialog-title">How to Play</h2>
+        <ul class="rules">
+          <li><span class="rule-dot rule-mint" aria-hidden="true"></span><span>Drag anywhere, or use Arrow keys / A-D, to steer your blob across the candy road.</span></li>
+          <li><span class="rule-dot rule-gold" aria-hidden="true"></span><span>Collect sprinkles for bonus points and a higher score.</span></li>
+          <li><span class="rule-dot rule-pink" aria-hidden="true"></span><span>Tap the Jump button, or press Space / Up, to hop over gummy cones and hurdles.</span></li>
+          <li><span class="rule-dot rule-danger" aria-hidden="true"></span><span>Do not fall into the chocolate gaps. Stay on the frosting.</span></li>
+          <li><span class="rule-dot rule-white" aria-hidden="true"></span><span>You have three hearts. A hit or a fall costs one heart; lose all three and the run ends.</span></li>
+          <li><span class="rule-dot rule-text" aria-hidden="true"></span><span>Keyboard: Esc or P pauses. Press Esc to close any menu.</span></li>
+        </ul>
+        <div class="actions">
+          <button id="btn-howto-play" class="btn btn-primary" type="button">Play Now</button>
+          <button id="btn-howto-close" class="btn btn-secondary" type="button">Close</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="tutorial" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+        <h2 id="tutorial-title" class="dialog-title">Quick Start</h2>
+        <p class="dialog-text">Steer left and right to stay on the candy road. Tap or press Space to hop over gummy cones and the chocolate gaps. Collect sprinkles along the way.</p>
+        <div class="actions">
+          <button id="btn-tutorial-start" class="btn btn-primary" type="button">Start</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="pause" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="pause-title">
+        <h2 id="pause-title" class="dialog-title">Paused</h2>
+        <p class="dialog-text">The run is paused. Press Esc to resume.</p>
+        <div class="actions">
+          <button id="btn-resume" class="btn btn-primary" type="button">Resume</button>
+          <button id="btn-restart" class="btn btn-secondary" type="button">Restart</button>
+          <button id="btn-pause-menu" class="btn btn-secondary" type="button">Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="syspause" class="overlay" hidden>
+      <div class="card" role="status" aria-live="polite">
+        <h2 class="dialog-title">Paused</h2>
+        <p class="dialog-text">The game is paused and will resume automatically.</p>
+      </div>
+    </div>
+
+    <section id="gameover" class="overlay" hidden>
+      <div class="card" role="dialog" aria-modal="true" aria-labelledby="go-title">
+        <h2 id="go-title" class="dialog-title">Run Complete</h2>
+        <p id="go-msg" class="dialog-text">Nicely rolled!</p>
+        <p id="go-coins" class="bead-line">Sprinkles collected: 0</p>
+        <div class="score-grid">
+          <div class="score-box"><span class="score-label">Score</span><span id="go-score" class="score-value">0</span></div>
+          <div class="score-box"><span class="score-label">Best</span><span id="go-best" class="score-value">0</span></div>
+        </div>
+        <div class="actions">
+          <button id="btn-again" class="btn btn-primary" type="button">Roll Again</button>
+          <button id="btn-menu" class="btn btn-secondary" type="button">Main Menu</button>
+        </div>
+      </div>
+    </section>
+
+    <p id="live" class="sr-only" aria-live="polite" aria-atomic="true"></p>
+  </div>
+  <script src="game.js"></script>
+</body>
+</html>
