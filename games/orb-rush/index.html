@@ -1,0 +1,269 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#0b1026" />
+  <meta name="description" content="Orb Rush is a fast, colorful 3D ball rolling adventure. Roll the orb, dodge wild obstacles, collect coins and reach the finish line." />
+  <title>Orb Rush — 3D Ball Rolling Adventure</title>
+  <link rel="icon" href="data:," />
+  <link rel="stylesheet" href="styles.css" />
+  <!-- YouTube Playables SDK must load before any game code. -->
+  <script src="https://www.youtube.com/game_api/v1"></script>
+</head>
+<body>
+  <svg class="svg-sprite" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+    <symbol id="i-coin" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="10" fill="#FFC93C"/>
+      <circle cx="12" cy="12" r="7.2" fill="none" stroke="#E39A00" stroke-width="1.6"/>
+      <path d="M12 7.6v8.8M9.4 9.6h4.2a2.1 2.1 0 0 1 0 4.2H9.4" fill="none" stroke="#9A5B00" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M8.4 5.6a8.9 8.9 0 0 1 6.4-1.1" fill="none" stroke="#FFF3B8" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>
+    </symbol>
+    <symbol id="i-star" viewBox="0 0 24 24">
+      <path d="m12 2.6 2.9 5.9 6.5.9-4.7 4.6 1.1 6.4-5.8-3-5.8 3 1.1-6.4L2.6 9.4l6.5-.9Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24">
+      <rect x="4.5" y="10" width="15" height="11" rx="3" fill="currentColor"/>
+      <path d="M7.5 10V7.4a4.5 4.5 0 0 1 9 0V10" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+      <circle cx="12" cy="15.4" r="1.7" fill="#0b1026"/>
+      <rect x="11.1" y="16" width="1.8" height="3" rx=".9" fill="#0b1026"/>
+    </symbol>
+    <symbol id="i-play" viewBox="0 0 24 24">
+      <path d="M8 5.3c0-1.2 1.3-1.9 2.3-1.3l11 6.7c1 .6 1 2 0 2.6l-11 6.7c-1 .6-2.3-.1-2.3-1.3Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-pause" viewBox="0 0 24 24">
+      <rect x="6" y="4.5" width="4.2" height="15" rx="2.1" fill="currentColor"/>
+      <rect x="13.8" y="4.5" width="4.2" height="15" rx="2.1" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-back" viewBox="0 0 24 24">
+      <path d="M14.5 5 8 12l6.5 7" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-gear" viewBox="0 0 24 24">
+      <path d="M10.2 2.8h3.6l.7 2.5c.6.2 1.1.5 1.7.9l2.5-.8 1.8 3.2-1.9 1.8c.1.5.1 1 0 1.5l1.9 1.8-1.8 3.2-2.5-.8c-.5.4-1.1.7-1.7.9l-.7 2.5h-3.6l-.7-2.5c-.6-.2-1.1-.5-1.7-.9l-2.5.8-1.8-3.2 1.9-1.8a7 7 0 0 1 0-1.5L4.2 8.6l1.8-3.2 2.5.8c.5-.4 1.1-.7 1.7-.9Z" fill="currentColor"/>
+      <circle cx="12" cy="12" r="3.2" fill="#0b1026"/>
+    </symbol>
+    <symbol id="i-music" viewBox="0 0 24 24">
+      <path d="M9 18.2a2.7 2.7 0 1 1-2-2.6V6.2l11-2.4v10.9a2.7 2.7 0 1 1-2-2.6V6.9L9 8.5Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-sfx" viewBox="0 0 24 24">
+      <path d="M4 9.5h3.4L12 5.4v13.2L7.4 14.5H4Z" fill="currentColor"/>
+      <path d="M15.2 8.7a4.7 4.7 0 0 1 0 6.6M17.9 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-haptic" viewBox="0 0 24 24">
+      <rect x="8" y="3" width="8" height="18" rx="2.6" fill="none" stroke="currentColor" stroke-width="2.1"/>
+      <path d="M4.7 8.5v7M2.2 10.5v3M19.3 8.5v7M21.8 10.5v3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24">
+      <path d="M7 4h10v5.2a5 5 0 0 1-10 0Z" fill="currentColor"/>
+      <path d="M7 5.6H4.2v1.8A3.4 3.4 0 0 0 7.6 10.8M17 5.6h2.8v1.8a3.4 3.4 0 0 1-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
+      <path d="M12 14.5v3.4M8.5 20h7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+    </symbol>
+    <symbol id="i-spark" viewBox="0 0 24 24">
+      <path d="M12 2.5c.7 4.7 2.8 6.8 7.5 7.5-4.7.7-6.8 2.8-7.5 7.5-.7-4.7-2.8-6.8-7.5-7.5 4.7-.7 6.8-2.8 7.5-7.5Z" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-check" viewBox="0 0 24 24">
+      <path d="m5 12.5 4.4 4.4L19 7.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+  </svg>
+
+  <div id="app">
+    <canvas id="c" aria-label="Orb Rush 3D game view" role="img"></canvas>
+
+    <!-- In-game HUD -->
+    <div id="hud" class="hidden" aria-hidden="true">
+      <div class="hud-top">
+        <div class="hud-row">
+          <button id="pauseBtn" class="hud-btn" aria-label="Pause game">
+            <svg class="ico"><use href="#i-pause"/></svg>
+          </button>
+          <div class="hud-level">
+            <span class="hud-badge" id="hudLevel">1</span>
+            <span class="hud-level-name" id="hudName">Sunrise Swing</span>
+          </div>
+          <div class="hud-coins" aria-label="Coins">
+            <svg class="ico"><use href="#i-coin"/></svg>
+            <span id="hudCoins">0</span>
+          </div>
+        </div>
+        <div class="hud-progress" aria-hidden="true">
+          <div class="hud-bar"><i id="progressFill"></i></div>
+          <span class="hud-orb" id="progressOrb"></span>
+        </div>
+      </div>
+      <div id="combo" class="combo hidden">COMBO <b>x2</b></div>
+      <div id="toast" class="toast hidden" role="status" aria-live="polite">Checkpoint!</div>
+      <div id="hint" class="hint hidden">
+        <span class="hint-gesture"><span class="hint-finger"></span> Hold to roll</span>
+        <span class="hint-sep">·</span>
+        <span class="hint-gesture">Drag to steer</span>
+      </div>
+      <div id="screenFlash" class="screen-flash"></div>
+    </div>
+
+    <!-- Main menu -->
+    <section id="menuScreen" class="screen menu-screen">
+      <div class="menu-top">
+        <div class="chips">
+          <div class="chip" title="Coins collected"><svg class="ico"><use href="#i-coin"/></svg><span id="menuCoins">0</span></div>
+          <div class="chip" title="Stars earned"><svg class="ico star-ico"><use href="#i-star"/></svg><span id="menuStars">0</span><em>/36</em></div>
+        </div>
+      </div>
+      <div class="menu-brand">
+        <p class="eyebrow"><span class="eyebrow-dot"></span> 3D BALL ADVENTURE</p>
+        <h1 class="logo">ORB <em>RUSH</em></h1>
+        <p class="tagline">Roll the orb. Grab the gold. Don't look down.</p>
+      </div>
+      <div class="menu-actions">
+        <button id="playBtn" class="btn btn-primary btn-hero">
+          <span class="btn-hero-icon"><svg class="ico"><use href="#i-play"/></svg></span>
+          <span class="btn-hero-text"><span id="playLabel">Play</span><small id="playSub">Track 1 · Sunrise Swing</small></span>
+        </button>
+        <div class="btn-row">
+          <button id="levelsBtn" class="btn btn-glass">Levels <span class="pill" id="levelsProgress">0/12</span></button>
+          <button id="shopBtn" class="btn btn-glass">Ball Shop</button>
+        </div>
+      </div>
+      <div class="menu-foot">
+        <div class="foot-hints" id="menuHint"><kbd>Hold</kbd> to roll <span class="sep">·</span> <kbd>Drag</kbd> to steer</div>
+        <button id="settingsBtn" class="ghost-btn" aria-label="Audio and haptics settings"><svg class="ico"><use href="#i-gear"/></svg></button>
+      </div>
+    </section>
+
+    <!-- Level select -->
+    <section id="levelsScreen" class="screen sheet-screen hidden" aria-hidden="true">
+      <header class="sheet-head">
+        <button id="levelsBack" class="round-btn" aria-label="Back to menu"><svg class="ico"><use href="#i-back"/></svg></button>
+        <div class="sheet-title">
+          <h2>Select a Track</h2>
+          <p>Three stars on every track — can you do it?</p>
+        </div>
+        <div class="chip"><svg class="ico"><use href="#i-coin"/></svg><span class="js-coins">0</span></div>
+      </header>
+      <div class="sheet-scroll">
+        <div id="levelGrid" class="level-grid"></div>
+      </div>
+    </section>
+
+    <!-- Ball shop -->
+    <section id="shopScreen" class="screen sheet-screen hidden" aria-hidden="true">
+      <header class="sheet-head">
+        <button id="shopBack" class="round-btn" aria-label="Back to menu"><svg class="ico"><use href="#i-back"/></svg></button>
+        <div class="sheet-title">
+          <h2>Ball Shop</h2>
+          <p>Skins are cosmetic — your roll stays legendary.</p>
+        </div>
+        <div class="chip"><svg class="ico"><use href="#i-coin"/></svg><span class="js-coins">0</span></div>
+      </header>
+      <div class="sheet-scroll">
+        <div id="skinGrid" class="skin-grid"></div>
+        <p class="shop-note">Collect coins on tracks to unlock every orb. Equipped orb shows up everywhere.</p>
+      </div>
+    </section>
+
+    <!-- Pause -->
+    <div id="pauseScreen" class="modal-layer hidden" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="pauseTitle">
+        <p class="eyebrow">Take a breather</p>
+        <h2 id="pauseTitle">Paused</h2>
+        <p class="modal-sub">Your orb is holding its breath.</p>
+        <button id="resumeBtn" class="btn btn-primary btn-lg">Resume</button>
+        <div class="btn-row">
+          <button id="restartBtn" class="btn btn-glass">Restart Track</button>
+          <button id="menuFromPauseBtn" class="btn btn-glass">Menu</button>
+        </div>
+        <button id="settingsFromPauseBtn" class="btn btn-ghost"><svg class="ico"><use href="#i-gear"/></svg> Audio &amp; Haptics</button>
+      </div>
+    </div>
+
+    <!-- Level complete -->
+    <div id="completeScreen" class="modal-layer hidden" aria-hidden="true">
+      <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="completeTitle">
+        <div class="stars" id="completeStars" aria-label="Stars earned">
+          <svg class="ico star"><use href="#i-star"/></svg>
+          <svg class="ico star"><use href="#i-star"/></svg>
+          <svg class="ico star"><use href="#i-star"/></svg>
+        </div>
+        <h2 id="completeTitle">Track Cleared!</h2>
+        <p class="modal-sub" id="completeSub">Sunrise Swing · Track 1</p>
+        <div class="result-grid">
+          <div class="result-cell"><small>Coins</small><strong id="resultCoins">+0</strong></div>
+          <div class="result-cell"><small>Time</small><strong id="resultTime">0:00</strong></div>
+          <div class="result-cell"><small>Falls</small><strong id="resultFalls">0</strong></div>
+        </div>
+        <p class="criteria" id="criteriaText">Finish +1 · Collect 70% coins +1 · No falls +1</p>
+        <button id="nextBtn" class="btn btn-primary btn-lg">Next Track</button>
+        <div class="btn-row">
+          <button id="replayBtn" class="btn btn-glass">Replay</button>
+          <button id="levelsFromCompleteBtn" class="btn btn-glass">Levels</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Final celebration -->
+    <div id="finalScreen" class="modal-layer hidden" aria-hidden="true">
+      <div class="modal modal-wide" role="dialog" aria-modal="true" aria-labelledby="finalTitle">
+        <div class="trophy"><svg class="ico"><use href="#i-trophy"/></svg></div>
+        <p class="eyebrow">All tracks conquered</p>
+        <h2 id="finalTitle">Orb Rush Champion!</h2>
+        <p class="modal-sub">You've completed all 12 tracks — that's the whole adventure! More tracks aren't planned, but you can replay any level to chase 3 stars, unlock every orb and beat your best times.</p>
+        <div class="result-grid">
+          <div class="result-cell"><small>Total stars</small><strong id="finalStars">0/36</strong></div>
+          <div class="result-cell"><small>Coins</small><strong id="finalCoins">0</strong></div>
+          <div class="result-cell"><small>Orbs</small><strong id="finalOrbs">1/10</strong></div>
+        </div>
+        <button id="finalLevelsBtn" class="btn btn-primary btn-lg">Level Select</button>
+        <div class="btn-row">
+          <button id="finalReplayBtn" class="btn btn-glass">Replay Finale</button>
+          <button id="finalMenuBtn" class="btn btn-glass">Menu</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Settings -->
+    <div id="settingsScreen" class="modal-layer hidden" aria-hidden="true">
+      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+        <p class="eyebrow">Tune your ride</p>
+        <h2 id="settingsTitle">Audio &amp; Haptics</h2>
+        <div class="setting">
+          <label for="musicRange"><svg class="ico"><use href="#i-music"/></svg> Music</label>
+          <div class="range-row">
+            <input id="musicRange" type="range" min="0" max="100" step="1" value="65" />
+            <output id="musicOut">65%</output>
+          </div>
+        </div>
+        <div class="setting">
+          <label for="sfxRange"><svg class="ico"><use href="#i-sfx"/></svg> Sound effects</label>
+          <div class="range-row">
+            <input id="sfxRange" type="range" min="0" max="100" step="1" value="85" />
+            <output id="sfxOut">85%</output>
+          </div>
+        </div>
+        <div class="setting setting-row">
+          <label for="hapticsToggle"><svg class="ico"><use href="#i-haptic"/></svg> Haptics</label>
+          <input id="hapticsToggle" class="switch" type="checkbox" />
+        </div>
+        <p class="modal-note">YouTube's mute control always takes priority over these settings.</p>
+        <button id="settingsDone" class="btn btn-primary btn-lg">Done</button>
+      </div>
+    </div>
+
+    <!-- Loading splash -->
+    <div id="splash" class="splash">
+      <div class="splash-orb-wrap">
+        <div class="splash-ring"></div>
+        <div class="splash-orb"></div>
+      </div>
+      <h1 class="logo splash-logo">ORB <em>RUSH</em></h1>
+      <p class="splash-status" id="splashStatus">Warming up the orb…</p>
+      <div class="splash-loader"><i></i></div>
+    </div>
+
+    <div id="unsupported" class="unsupported hidden">
+      <h2>WebGL needed</h2>
+      <p>This game needs a browser with WebGL enabled. Try updating your browser or enabling hardware acceleration.</p>
+    </div>
+  </div>
+
+  <script src="game.js"></script>
+</body>
+</html>

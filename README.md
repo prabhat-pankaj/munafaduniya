@@ -36,6 +36,7 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 | `contact.html` | Website purchase, advertising, and partnership enquiry form |
 | `games.html` | Games hub listing playable browser games |
 | `games/stardust-tail/` | Stardust Tail — a self-contained HTML/CSS/JS arcade game |
+| `games/blob-dash/` | Blob Dash — a pseudo-3D candy-road runner with YouTube Playables SDK integration |
 | `thank-you.html` | No-JavaScript fallback confirmation page |
 | `signin.html` | Sign-in page with email/password, Google, and phone OTP |
 | `signup.html` | Create-account page with the same sign-up methods |
