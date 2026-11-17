@@ -98,6 +98,13 @@
         <span class="hint-gesture">Drag to steer</span>
       </div>
       <div id="screenFlash" class="screen-flash"></div>
+      <div id="arenaIntro" class="arena-intro" aria-live="polite" aria-hidden="true">
+        <div class="arena-card">
+          <span id="arenaKicker" class="arena-kicker">NOW ENTERING</span>
+          <strong id="arenaTitle" class="arena-title">Sunrise Swing</strong>
+          <span id="arenaSub" class="arena-sub">TRACK 01</span>
+        </div>
+      </div>
     </div>
 
     <!-- Main menu -->
@@ -105,7 +112,7 @@
       <div class="menu-top">
         <div class="chips">
           <div class="chip" title="Coins collected"><svg class="ico"><use href="#i-coin"/></svg><span id="menuCoins">0</span></div>
-          <div class="chip" title="Stars earned"><svg class="ico star-ico"><use href="#i-star"/></svg><span id="menuStars">0</span><em>/36</em></div>
+          <div class="chip" title="Stars earned"><svg class="ico star-ico"><use href="#i-star"/></svg><span id="menuStars">0</span><em id="menuStarsMax">/54</em></div>
         </div>
       </div>
       <div class="menu-brand">
@@ -135,7 +142,7 @@
         <button id="levelsBack" class="round-btn" aria-label="Back to menu"><svg class="ico"><use href="#i-back"/></svg></button>
         <div class="sheet-title">
           <h2>Select a Track</h2>
-          <p>Three stars on every track — can you do it?</p>
+          <p>Three stars on all 18 tracks — can you do it?</p>
         </div>
         <div class="chip"><svg class="ico"><use href="#i-coin"/></svg><span class="js-coins">0</span></div>
       </header>
@@ -205,9 +212,9 @@
         <div class="trophy"><svg class="ico"><use href="#i-trophy"/></svg></div>
         <p class="eyebrow">All tracks conquered</p>
         <h2 id="finalTitle">Orb Rush Champion!</h2>
-        <p class="modal-sub">You've completed all 12 tracks — that's the whole adventure! More tracks aren't planned, but you can replay any level to chase 3 stars, unlock every orb and beat your best times.</p>
+        <p class="modal-sub" id="finalCopy">You've completed all 18 tracks — that's the whole adventure! Replay any level to chase 3 stars, unlock every orb and beat your best times.</p>
         <div class="result-grid">
-          <div class="result-cell"><small>Total stars</small><strong id="finalStars">0/36</strong></div>
+          <div class="result-cell"><small>Total stars</small><strong id="finalStars">0/54</strong></div>
           <div class="result-cell"><small>Coins</small><strong id="finalCoins">0</strong></div>
           <div class="result-cell"><small>Orbs</small><strong id="finalOrbs">1/10</strong></div>
         </div>
