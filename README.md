@@ -35,6 +35,7 @@ The contact page sends enquiries to `munafaduniya@gmail.com` through [FormSubmit
 | `index.html` | Deals home page with best deals, featured deals, and partner offers |
 | `contact.html` | Website purchase, advertising, and partnership enquiry form |
 | `games.html` | Games hub listing playable browser games |
+| `games/orb-rush/` | Orb Rush — a 3D ball-roller across 12 candy sky tracks with YouTube Playables SDK integration |
 | `games/stardust-tail/` | Stardust Tail — a self-contained HTML/CSS/JS arcade game |
 | `games/blob-dash/` | Blob Dash — a pseudo-3D candy-road runner with YouTube Playables SDK integration |
 | `thank-you.html` | No-JavaScript fallback confirmation page |

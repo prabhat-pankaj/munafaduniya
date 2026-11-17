@@ -3929,6 +3929,33 @@ textarea {
   mix-blend-mode: screen;
 }
 
+.game-card-cover--image {
+  background: #06040f;
+}
+
+.game-card-cover--image::after {
+  background:
+    linear-gradient(180deg, rgba(6, 4, 15, 0.35) 0%, rgba(6, 4, 15, 0) 34%),
+    linear-gradient(0deg, rgba(6, 4, 15, 0.78) 0%, rgba(6, 4, 15, 0.22) 30%, rgba(6, 4, 15, 0) 56%);
+  opacity: 1;
+  mix-blend-mode: normal;
+}
+
+.game-card-cover-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.015);
+  transition: transform 0.55s cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+.game-card:hover .game-card-cover-img,
+.game-card-cover:focus-visible .game-card-cover-img {
+  transform: scale(1.06);
+}
+
 .game-card-badge {
   position: absolute;
   top: 0.75rem;
