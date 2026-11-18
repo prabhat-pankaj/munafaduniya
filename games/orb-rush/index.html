@@ -6,9 +6,6 @@
   <meta name="theme-color" content="#0b1026" />
   <meta name="description" content="Orb Rush is a fast, colorful 3D ball rolling adventure. Roll the orb, dodge wild obstacles, collect coins and reach the finish line." />
   <title>Orb Rush — 3D Ball Rolling Adventure</title>
-  <meta property="og:image" content="thumbnail-1280x800.jpg" />
-  <meta property="og:image:width" content="1280" />
-  <meta property="og:image:height" content="800" />
   <link rel="icon" href="data:," />
   <link rel="stylesheet" href="styles.css" />
   <!-- YouTube Playables SDK must load before any game code. -->
@@ -19,7 +16,7 @@
     <symbol id="i-coin" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="10" fill="#FFC93C"/>
       <circle cx="12" cy="12" r="7.2" fill="none" stroke="#E39A00" stroke-width="1.6"/>
-      <path d="M12 7.6v8.8M9.4 9.6h4.2a2.1 2.1 0 0 1 0 4.2H9.4" fill="none" stroke="#9A5B00" stroke-width="1.7" stroke-linecap="round"/>
+      <path d="M12 5.6v12.8M15.4 8.5c-.5-1.2-1.7-2-3.3-2-1.9 0-3.2 1-3.2 2.6 0 1.8 1.6 2.3 3.3 2.8 1.8.5 3.4 1 3.4 2.9 0 1.7-1.5 2.8-3.6 2.8-1.7 0-3-.8-3.5-2.1" fill="none" stroke="#8A5200" stroke-width="1.8" stroke-linecap="round"/>
       <path d="M8.4 5.6a8.9 8.9 0 0 1 6.4-1.1" fill="none" stroke="#FFF3B8" stroke-width="1.6" stroke-linecap="round" opacity=".9"/>
     </symbol>
     <symbol id="i-star" viewBox="0 0 24 24">
@@ -56,6 +53,15 @@
       <rect x="8" y="3" width="8" height="18" rx="2.6" fill="none" stroke="currentColor" stroke-width="2.1"/>
       <path d="M4.7 8.5v7M2.2 10.5v3M19.3 8.5v7M21.8 10.5v3" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
     </symbol>
+    <symbol id="i-roll" viewBox="0 0 24 24">
+      <path d="M19.4 9.4A8 8 0 1 0 20 13.8" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round"/>
+      <path d="M15.8 5.2h4.2V9.4" fill="none" stroke="currentColor" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="12" r="3.3" fill="currentColor"/>
+    </symbol>
+    <symbol id="i-jump" viewBox="0 0 24 24">
+      <path d="M12 3.4v10.2M8.4 7 12 3.4 15.6 7" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <circle cx="12" cy="17.3" r="3.4" fill="currentColor"/>
+    </symbol>
     <symbol id="i-trophy" viewBox="0 0 24 24">
       <path d="M7 4h10v5.2a5 5 0 0 1-10 0Z" fill="currentColor"/>
       <path d="M7 5.6H4.2v1.8A3.4 3.4 0 0 0 7.6 10.8M17 5.6h2.8v1.8a3.4 3.4 0 0 1-3.4 3.4" fill="none" stroke="currentColor" stroke-width="1.8"/>
@@ -66,6 +72,10 @@
     </symbol>
     <symbol id="i-check" viewBox="0 0 24 24">
       <path d="m5 12.5 4.4 4.4L19 7.5" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <symbol id="i-smash" viewBox="0 0 24 24">
+      <path d="m12 2 2.2 5.6L20 9.2l-4.4 3.9 1.1 5.9-4.7-2.8L7.3 19l1.1-5.9L4 9.2l5.8-1.6Z" fill="currentColor"/>
+      <path d="M3 3.2 5.7 6M21 3.2 18.3 6M3 20.8 5.7 18M21 20.8 18.3 18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
     </symbol>
   </svg>
 
@@ -94,9 +104,23 @@
         </div>
       </div>
       <div id="combo" class="combo hidden">COMBO <b>x2</b></div>
+      <div id="smashHud" class="smash-hud hidden" aria-live="polite">
+        <span class="smash-ico"><svg class="ico"><use href="#i-smash"/></svg></span>
+        <span class="smash-label">SMASH</span>
+        <b id="smashCount">1</b>
+        <em id="smashChain"></em>
+      </div>
+      <div class="speed-hud" id="speedHud" aria-hidden="true">
+        <div class="speed-ring" id="speedRing">
+          <span class="speed-num"><b id="speedValue">0</b><small>KM/H</small></span>
+        </div>
+        <span class="speed-caption">VELOCITY</span>
+      </div>
       <div id="toast" class="toast hidden" role="status" aria-live="polite">Checkpoint!</div>
       <div id="hint" class="hint hidden">
         <span class="hint-gesture"><span class="hint-finger"></span> Hold to roll</span>
+        <span class="hint-sep">·</span>
+        <span class="hint-gesture">Swipe up to jump</span>
         <span class="hint-sep">·</span>
         <span class="hint-gesture">Drag to steer</span>
       </div>
@@ -115,13 +139,13 @@
       <div class="menu-top">
         <div class="chips">
           <div class="chip" title="Coins collected"><svg class="ico"><use href="#i-coin"/></svg><span id="menuCoins">0</span></div>
-          <div class="chip" title="Stars earned"><svg class="ico star-ico"><use href="#i-star"/></svg><span id="menuStars">0</span><em id="menuStarsMax">/69</em></div>
+          <div class="chip" title="Stars earned"><svg class="ico star-ico"><use href="#i-star"/></svg><span id="menuStars">0</span><em id="menuStarsMax">/96</em></div>
         </div>
       </div>
       <div class="menu-brand">
         <p class="eyebrow"><span class="eyebrow-dot"></span> 3D BALL ADVENTURE</p>
         <h1 class="logo">ORB <em>RUSH</em></h1>
-        <p class="tagline">Roll the orb. Grab the gold. Don't look down.</p>
+        <p class="tagline">Roll the orb. Smash the chaos. Own the sky.</p>
       </div>
       <div class="menu-actions">
         <button id="playBtn" class="btn btn-primary btn-hero">
@@ -129,12 +153,12 @@
           <span class="btn-hero-text"><span id="playLabel">Play</span><small id="playSub">Track 1 · Sunrise Swing</small></span>
         </button>
         <div class="btn-row">
-          <button id="levelsBtn" class="btn btn-glass">Levels <span class="pill" id="levelsProgress">0/12</span></button>
+          <button id="levelsBtn" class="btn btn-glass">Levels <span class="pill" id="levelsProgress">0/32</span></button>
           <button id="shopBtn" class="btn btn-glass">Ball Shop</button>
         </div>
       </div>
       <div class="menu-foot">
-        <div class="foot-hints" id="menuHint"><kbd>Hold</kbd> to roll <span class="sep">·</span> <kbd>Drag</kbd> to steer</div>
+        <div class="foot-hints" id="menuHint"><kbd>Hold</kbd> to roll <span class="sep">·</span> <kbd>Swipe ↑</kbd> to jump <span class="sep">·</span> <kbd>Drag</kbd> to steer</div>
         <button id="settingsBtn" class="ghost-btn" aria-label="Audio and haptics settings"><svg class="ico"><use href="#i-gear"/></svg></button>
       </div>
     </section>
@@ -145,7 +169,7 @@
         <button id="levelsBack" class="round-btn" aria-label="Back to menu"><svg class="ico"><use href="#i-back"/></svg></button>
         <div class="sheet-title">
           <h2>Select a Track</h2>
-          <p>Three stars on all 18 tracks — can you do it?</p>
+          <p>Three stars on all 32 tracks — smash your way to the top.</p>
         </div>
         <div class="chip"><svg class="ico"><use href="#i-coin"/></svg><span class="js-coins">0</span></div>
       </header>
@@ -166,7 +190,7 @@
       </header>
       <div class="sheet-scroll">
         <div id="skinGrid" class="skin-grid"></div>
-        <p class="shop-note">Collect coins on tracks to unlock every orb. Equipped orb shows up everywhere.</p>
+        <p class="shop-note">Collect coins and smash obstacles to unlock every orb. Higher tiers glow brighter in the garage.</p>
       </div>
     </section>
 
@@ -181,7 +205,7 @@
           <button id="restartBtn" class="btn btn-glass">Restart Track</button>
           <button id="menuFromPauseBtn" class="btn btn-glass">Menu</button>
         </div>
-        <button id="settingsFromPauseBtn" class="btn btn-ghost"><svg class="ico"><use href="#i-gear"/></svg> Audio &amp; Haptics</button>
+        <button id="settingsFromPauseBtn" class="btn btn-ghost"><svg class="ico"><use href="#i-gear"/></svg> Settings</button>
       </div>
     </div>
 
@@ -199,6 +223,7 @@
           <div class="result-cell"><small>Coins</small><strong id="resultCoins">+0</strong></div>
           <div class="result-cell"><small>Time</small><strong id="resultTime">0:00</strong></div>
           <div class="result-cell"><small>Falls</small><strong id="resultFalls">0</strong></div>
+          <div class="result-cell"><small>Smashed</small><strong id="resultSmashes">0</strong></div>
         </div>
         <p class="criteria" id="criteriaText">Finish +1 · Collect 70% coins +1 · No falls +1</p>
         <button id="nextBtn" class="btn btn-primary btn-lg">Next Track</button>
@@ -215,11 +240,12 @@
         <div class="trophy"><svg class="ico"><use href="#i-trophy"/></svg></div>
         <p class="eyebrow">All tracks conquered</p>
         <h2 id="finalTitle">Orb Rush Champion!</h2>
-        <p class="modal-sub" id="finalCopy">You've completed all 18 tracks — that's the whole adventure! Replay any level to chase 3 stars, unlock every orb and beat your best times.</p>
-        <div class="result-grid">
-          <div class="result-cell"><small>Total stars</small><strong id="finalStars">0/69</strong></div>
+        <p class="modal-sub" id="finalCopy">You've completed all 32 tracks — that's the whole adventure! Replay any level to chase 3 stars, unlock every orb and beat your best times.</p>
+        <div class="result-grid result-grid-final">
+          <div class="result-cell"><small>Total stars</small><strong id="finalStars">0/96</strong></div>
           <div class="result-cell"><small>Coins</small><strong id="finalCoins">0</strong></div>
-          <div class="result-cell"><small>Orbs</small><strong id="finalOrbs">1/10</strong></div>
+          <div class="result-cell"><small>Orbs</small><strong id="finalOrbs">1/21</strong></div>
+          <div class="result-cell"><small>Smashed</small><strong id="finalSmashes">0</strong></div>
         </div>
         <button id="finalLevelsBtn" class="btn btn-primary btn-lg">Level Select</button>
         <div class="btn-row">
@@ -233,7 +259,15 @@
     <div id="settingsScreen" class="modal-layer hidden" aria-hidden="true">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
         <p class="eyebrow">Tune your ride</p>
-        <h2 id="settingsTitle">Audio &amp; Haptics</h2>
+        <h2 id="settingsTitle">Settings</h2>
+        <div class="setting setting-row">
+          <label for="autoMoveToggle"><svg class="ico"><use href="#i-roll"/></svg> Auto roll</label>
+          <input id="autoMoveToggle" class="switch" type="checkbox" checked />
+        </div>
+        <div class="setting setting-row">
+          <label for="autoJumpToggle"><svg class="ico"><use href="#i-jump"/></svg> Auto jump</label>
+          <input id="autoJumpToggle" class="switch" type="checkbox" checked />
+        </div>
         <div class="setting">
           <label for="musicRange"><svg class="ico"><use href="#i-music"/></svg> Music</label>
           <div class="range-row">
@@ -252,7 +286,7 @@
           <label for="hapticsToggle"><svg class="ico"><use href="#i-haptic"/></svg> Haptics</label>
           <input id="hapticsToggle" class="switch" type="checkbox" />
         </div>
-        <p class="modal-note">YouTube's mute control always takes priority over these settings.</p>
+        <p class="modal-note">Auto roll and auto jump keep the orb moving for you. Turn them off to control every move. YouTube's mute control always takes priority over audio settings.</p>
         <button id="settingsDone" class="btn btn-primary btn-lg">Done</button>
       </div>
     </div>
