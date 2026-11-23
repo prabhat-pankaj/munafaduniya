@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no, shrink-to-fit=yes">
+  <meta name="theme-color" content="#6fc9f2">
+  <title>Sky Stack Rush</title>
+  <link rel="stylesheet" href="TemplateData/style.css">
+  <script src="https://www.youtube.com/game_api/v1"></script>
+  <script>
+    // Early stub helpers before any Unity jslib code can reference them
+    function SkyStackGetYTGame() {
+      return (typeof ytgame !== 'undefined' && ytgame) ? ytgame : null;
+    }
+    var _skyStackSendAttempts = 0;
+    function SkyStackSendToUnity(method, value) {
+      if (typeof unityGameInstance !== 'undefined' && unityGameInstance && unityGameInstance.SendMessage) {
+        if (value === undefined || value === null) {
+          unityGameInstance.SendMessage('YTGameWrapper', method);
+        } else {
+          unityGameInstance.SendMessage('YTGameWrapper', method, value);
+        }
+      } else if (_skyStackSendAttempts++ < 120) {
+        setTimeout(function() { SkyStackSendToUnity(method, value); }, 100);
+      }
+    }
+    function SkyStackLocalSaveKey() {
+      return 'SkyStackRushSaveData';
+    }
+    function SkyStackSaveLocal(data) {
+      try {
+        localStorage.setItem(SkyStackLocalSaveKey(), data);
+      } catch(e) {}
+    }
+    function SkyStackLoadLocal() {
+      var data = '';
+      try {
+        data = localStorage.getItem(SkyStackLocalSaveKey()) || '';
+      } catch(e) {}
+      SkyStackSendToUnity('ReceiveOnLoadSaveEvent', data);
+    }
+    (function () {
+      if (typeof ytgame !== 'undefined') { return; }
+      var KEY = 'SkyStackRushSaveData';
+      function readSave() {
+        try { return window.localStorage.getItem(KEY) || ''; } catch (e) { return ''; }
+      }
+      function writeSave(data) {
+        try { window.localStorage.setItem(KEY, data); } catch (e) {}
+      }
+      window.ytgame = {
+        IN_PLAYABLES_ENV: false,
+        SDK_VERSION: 'local-stub',
+        game: {
+          firstFrameReady: function () { console.log('[SkyStackRush] firstFrameReady'); },
+          gameReady: function () { console.log('[SkyStackRush] gameReady'); },
+          loadData: function () { return Promise.resolve(readSave()); },
+          saveData: function (data) { writeSave(data); return Promise.resolve(); }
+        },
+        system: {
+          isAudioEnabled: function () { return true; },
+          onAudioEnabledChange: function () { return function () {}; },
+          onPause: function () { return function () {}; },
+          onResume: function () { return function () {}; },
+          getLanguage: function () { return Promise.resolve(navigator.language || 'en-US'); }
+        },
+        engagement: {
+          sendScore: function (score) { console.log('[SkyStackRush] score ' + score.value); return Promise.resolve(); },
+          openYTContent: function () { return Promise.resolve(); }
+        },
+        health: {
+          logError: function () {},
+          logWarning: function () {}
+        },
+        ads: {
+          requestInterstitialAd: function () { return Promise.resolve(); },
+          requestRewardedAd: function () { return Promise.resolve(true); }
+        }
+      };
+    })();
+  </script>
+</head>
+<body>
+  <div id="unity-container">
+    <canvas id="unity-canvas" width="1280" height="720" tabindex="-1"></canvas>
+    <div id="unity-warning"></div>
+  </div>
+
+  <div id="loading-screen">
+    <div class="sky-glow"></div>
+    <div class="cloud cloud-a"></div>
+    <div class="cloud cloud-b"></div>
+    <div class="cloud cloud-c"></div>
+    <div class="loader-content">
+      <div class="logo">
+        <div class="logo-kicker">A SKY-HIGH BALL ADVENTURE</div>
+        <div class="logo-sky">SKY STACK</div>
+        <div class="logo-rush">RUSH</div>
+      </div>
+      <div class="ball-stage">
+        <div class="shadow"></div>
+        <div class="ball">
+          <div class="eye eye-left"><span></span></div>
+          <div class="eye eye-right"><span></span></div>
+          <div class="smile"></div>
+          <div class="blush blush-left"></div>
+          <div class="blush blush-right"></div>
+        </div>
+      </div>
+      <div class="progress-shell">
+        <div id="progress-bar"></div>
+      </div>
+      <div class="loading-label">Rolling out the red carpet <span id="progress-dots">...</span></div>
+    </div>
+    <div id="loading-tip">DRAG TO STEER &nbsp;•&nbsp; TAP TO JUMP</div>
+  </div>
+
+  <div id="crash-screen" hidden>
+    <div class="crash-card">
+      <h1>Oops, the ball rolled away.</h1>
+      <p id="crash-message">Please reload the game.</p>
+    </div>
+  </div>
+
+  <script>
+    var unityGameInstance = null;
+    var container = document.querySelector("#unity-container");
+    var canvas = document.querySelector("#unity-canvas");
+    var loadingScreen = document.querySelector("#loading-screen");
+    var progressBar = document.querySelector("#progress-bar");
+    var warningBanner = document.querySelector("#unity-warning");
+    var crashScreen = document.querySelector("#crash-screen");
+    var crashMessage = document.querySelector("#crash-message");
+    var loaderUrl = "Build/ca070b3917b844d61a55e784578ddde2.loader.js";
+
+    function showCrash(message) {
+      crashMessage.textContent = message || "Please reload the game.";
+      crashScreen.hidden = false;
+      loadingScreen.style.opacity = "0";
+      loadingScreen.style.pointerEvents = "none";
+      console.error(message);
+    }
+
+    function unityShowBanner(msg, type) {
+      if (type === "error") {
+        showCrash(msg);
+      } else {
+        warningBanner.textContent = msg;
+        warningBanner.style.display = "block";
+        setTimeout(function () { warningBanner.style.display = "none"; }, 5000);
+      }
+    }
+
+    var config = {
+      dataUrl: "Build/4ceb25d18b9065f0c418ae4b920e874e.data",
+      frameworkUrl: "Build/cb23e43f12709f02a186ccbcce7fe221.framework.js",
+      codeUrl: "Build/6b80b4d9c1cc18a1ab06d1c5d4c65933.wasm",
+      streamingAssetsUrl: "StreamingAssets",
+      companyName: "SkyStack Studio",
+      productName: "Sky Stack Rush",
+      productVersion: "1.0.0",
+      showBanner: unityShowBanner
+    };
+
+    if (/iPhone|iPad|iPod|Android/i.test(navigator.userAgent)) {
+      container.className = "unity-mobile";
+      canvas.className = "unity-mobile";
+      config.devicePixelRatio = 1;
+    } else {
+      config.devicePixelRatio = Math.min(window.devicePixelRatio || 1, 2);
+    }
+
+    var script = document.createElement("script");
+    script.src = loaderUrl;
+    script.onload = function () {
+      createUnityInstance(canvas, config, function (progress) {
+        progressBar.style.width = Math.round(progress * 100) + "%";
+      }).then(function (instance) {
+        unityGameInstance = instance;
+        loadingScreen.style.opacity = "0";
+        loadingScreen.style.pointerEvents = "none";
+        setTimeout(function () { loadingScreen.style.display = "none"; }, 650);
+        window.addEventListener("resize", function () {
+          if (unityGameInstance && unityGameInstance.Module) {
+            unityGameInstance.Module.resizeCanvas();
+          }
+        });
+      }).catch(function (message) {
+        showCrash(message);
+      });
+    };
+    script.onerror = function () {
+      showCrash("Could not load the game engine files.");
+    };
+    document.body.appendChild(script);
+
+    window.addEventListener("error", function (event) {
+      if (event && event.message) {
+        console.error(event.message);
+      }
+    });
+  </script>
+</body>
+</html>
