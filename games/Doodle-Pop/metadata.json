@@ -1,0 +1,6 @@
+{
+  "name": "DoodlePop Studio",
+  "description": "A vibrant kids drawing and coloring game compatible with YouTube Playables featuring touch-friendly tools, animated sticker rewards, and real-time social sharing.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
